@@ -1,7 +1,9 @@
 package li.flurin.organiplus.screen
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontVariation
@@ -19,8 +21,7 @@ fun HomeScreen() {
 
 
 @Composable
-fun TextLogo() {
-    // 1. Create a FontFamily using the generated CMP resource
+fun TextLogo(color: Color = MaterialTheme.colorScheme.onSurface) {
     val customFontFamily = FontFamily(
         Font(
             resource = Res.font.muesomoderno_italic_variable,
@@ -34,7 +35,8 @@ fun TextLogo() {
     // 2. Display your text
     Text(
         text = "OrganiPlus",
-        fontFamily = customFontFamily
+        fontFamily = customFontFamily,
+        color = color
     )
 }
 

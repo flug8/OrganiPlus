@@ -18,6 +18,8 @@ kotlin {
     }
     
     jvm()
+
+    jvmToolchain(21)
     
     js {
         browser()
@@ -55,6 +57,11 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutinesSwing)
+            implementation(libs.jewel.int.ui.standalone)
+            implementation(libs.jewel.decorated.window)
+            implementation(libs.jewel.int.ui.decorated.window)
+            implementation(libs.jna)
+            implementation(libs.jna.platform)
         }
     }
 }
@@ -98,6 +105,10 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "li.flurin.organiplus"
             packageVersion = "1.0.0"
+            javaHome = System.getProperty("java.home")
+            windows {
+                console = true
+            }
         }
     }
 }
