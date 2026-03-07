@@ -15,6 +15,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,17 +25,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import li.flurin.organiplus.screen.HomeScreen
 
 
-data class NavRoute(val title: String, val icon: ImageVector)
+data class NavRoute(val title: String, val icon: ImageVector, val content: @Composable () -> Unit)
 
 @Composable
 fun AppLayout() {
     val routes = listOf(
-        NavRoute("Home", Icons.Default.Home),
-        NavRoute("Bucket", Icons.Default.ExpandCircleDown),
-        NavRoute("Stats", Icons.Default.Leaderboard),
-        NavRoute("Settings", Icons.Default.Settings)
+        NavRoute("Home", Icons.Default.Home) { HomeScreen() },
+        NavRoute("Bucket", Icons.Default.ExpandCircleDown) { DemoScreen("Bucket") },
+        NavRoute("Stats", Icons.Default.Leaderboard) { DemoScreen("Stats") },
+        NavRoute("Settings", Icons.Default.Settings) { DemoScreen("Settings") }
     )
 
     var currentRoute by remember { mutableStateOf(routes[0]) }
@@ -73,10 +75,7 @@ fun AppLayout() {
                     label = "Page Transition"
                 ) {activeRoute ->
                     Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-                        Text(
-                            "Current Screen: ${activeRoute.title}",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        activeRoute.content()
                     }
                 }
             }
@@ -100,7 +99,7 @@ fun AppLayout() {
                             modifier = Modifier.align(Alignment.Start)
                         ) {
                             Icon(
-                                imageVector = if (isSidePanelExpanded) Icons.Default.MenuOpen else Icons.Default.Menu,
+                                imageVector = if (isSidePanelExpanded) Icons.AutoMirrored.Filled.MenuOpen else Icons.Default.Menu,
                                 contentDescription = "Toggle Menu"
                             )
                         }
@@ -145,10 +144,7 @@ fun AppLayout() {
                             .fillMaxHeight()
                             .background(MaterialTheme.colorScheme.background)
                     ) {
-                        Text(
-                            "Current Screen: ${activeRoute.title}",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                       activeRoute.content()
                     }
                 }
             }
@@ -192,4 +188,12 @@ fun SideNavigationItem(
             )
         }
     }
+}
+
+
+@Composable
+fun DemoScreen(title: String) {
+    Text(
+        "Current Screen: ${title}"
+    )
 }
