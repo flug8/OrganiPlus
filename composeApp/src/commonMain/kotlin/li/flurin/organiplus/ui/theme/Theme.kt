@@ -84,52 +84,6 @@ private val darkScheme = darkColorScheme(
     surfaceContainerHighest = surfaceContainerHighestDark,
 )
 
-private val mediumContrastLightColorScheme = lightColorScheme(
-    primary = primaryLightMediumContrast,
-    onPrimary = onPrimaryLightMediumContrast,
-    primaryContainer = primaryContainerLightMediumContrast,
-    onPrimaryContainer = onPrimaryContainerLightMediumContrast,
-    secondary = secondaryLightMediumContrast,
-    onSecondary = onSecondaryLightMediumContrast,
-    secondaryContainer = secondaryContainerLightMediumContrast,
-    onSecondaryContainer = onSecondaryContainerLightMediumContrast,
-    tertiary = tertiaryLightMediumContrast,
-    onTertiary = onTertiaryLightMediumContrast,
-    tertiaryContainer = tertiaryContainerLightMediumContrast,
-    onTertiaryContainer = onTertiaryContainerLightMediumContrast,
-    error = errorLightMediumContrast,
-    onError = onErrorLightMediumContrast,
-    errorContainer = errorContainerLightMediumContrast,
-    onErrorContainer = onErrorContainerLightMediumContrast,
-    background = backgroundLightMediumContrast,
-    onBackground = onBackgroundLightMediumContrast,
-    surface = surfaceLightMediumContrast,
-    onSurface = onSurfaceLightMediumContrast,
-    surfaceVariant = surfaceVariantLightMediumContrast,
-    onSurfaceVariant = onSurfaceVariantLightMediumContrast,
-    outline = outlineLightMediumContrast,
-    outlineVariant = outlineVariantLightMediumContrast,
-    scrim = scrimLightMediumContrast,
-    inverseSurface = inverseSurfaceLightMediumContrast,
-    inverseOnSurface = inverseOnSurfaceLightMediumContrast,
-    inversePrimary = inversePrimaryLightMediumContrast,
-    surfaceDim = surfaceDimLightMediumContrast,
-    surfaceBright = surfaceBrightLightMediumContrast,
-    surfaceContainerLowest = surfaceContainerLowestLightMediumContrast,
-    surfaceContainerLow = surfaceContainerLowLightMediumContrast,
-    surfaceContainer = surfaceContainerLightMediumContrast,
-    surfaceContainerHigh = surfaceContainerHighLightMediumContrast,
-    surfaceContainerHighest = surfaceContainerHighestLightMediumContrast,
-)
-
-@Immutable
-data class ColorFamily(
-    val color: Color,
-    val onColor: Color,
-    val colorContainer: Color,
-    val onColorContainer: Color
-)
-
 
 @Composable
 fun AppTheme(
