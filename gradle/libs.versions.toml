@@ -12,8 +12,11 @@ androidx-testExt = "1.3.0"
 composeHotReload = "1.0.0"
 composeMultiplatform = "1.10.0"
 jewel = "0.34.0-253.31033.149"
+jkeymaster = "1.3"
 jna = "5.14.0"
+jnaPlatform = "5.18.1"
 jnativehook = "2.2.2"
+jnaVersion = "5.18.1"
 junit = "4.13.2"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
@@ -22,7 +25,9 @@ adaptive = "1.2.0"
 material3AdaptiveNavigationSuite = "1.9.0"
 materialIconsExtended = "1.7.3"
 roomRuntimeAndroid = "2.8.4"
+slf4jSimple = "2.0.17"
 sqliteDriver = "2.2.1"
+windowStyler = "0.3.2"
 
 [libraries]
 android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqliteDriver" }
@@ -30,8 +35,11 @@ coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", 
 jewel-int-ui-standalone = { module = "org.jetbrains.jewel:jewel-int-ui-standalone", version.ref = "jewel" }
 jewel-decorated-window = { module = "org.jetbrains.jewel:jewel-decorated-window", version.ref = "jewel" }
 jewel-int-ui-decorated-window = { module = "org.jetbrains.jewel:jewel-int-ui-decorated-window", version.ref = "jewel" }
+jkeymaster = { module = "com.github.tulskiy:jkeymaster", version.ref = "jkeymaster" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+jna-platform-v5181 = { module = "net.java.dev.jna:jna-platform", version.ref = "jnaPlatform" }
+jna-v5181 = { module = "net.java.dev.jna:jna", version.ref = "jnaVersion" }
 jnativehook = { module = "com.github.kwhat:jnativehook", version.ref = "jnativehook" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
@@ -56,7 +64,9 @@ material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adapti
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3AdaptiveNavigationSuite" }
 material3-window-size-class1 = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "material3AdaptiveNavigationSuite" }
 androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqliteDriver" }
+window-styler = { module = "com.mayakapps.compose:window-styler", version.ref = "windowStyler" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

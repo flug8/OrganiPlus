@@ -56,6 +56,10 @@ kotlin {
             implementation(libs.jna.platform)
             implementation(libs.sqlite.driver)
             implementation(libs.jnativehook)
+            implementation(libs.jna.v5181)
+            implementation(libs.jna.platform.v5181)
+            implementation(libs.jkeymaster)
+            implementation(libs.slf4j.simple)
         }
     }
 }
