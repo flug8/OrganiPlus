@@ -1,3 +1,67 @@
+CREATE TABLE tasks (
+    id TEXT PRIMARY KEY NOT NULL, --UUIDv4
+
+    -- Sync & Audit
+    created_at INTEGER NOT NULL, -- when task was first created
+    updated_at INTEGER NOT NULL, -- last write (needed for cloud sync, last write wins)
+    deleted_at INTEGER DEFAULT NULL, -- for soft delete (for cloud sync)
+    is_dirty INTEGER NOT NULL DEFAULT 1, -- if not synced yet
+
+    -- Core Task Data
+    title TEXT NOT NULL,
+    description TEXT DEFAULT NULL, -- maybe i'll replace this with something else or more columns
+    status INTEGER NOT NULL DEFAULT 0, -- 0 is UNFINISHED, 1 is COMPLETED, 2 is CANCELED (maybe)
+    completed_at INTEGER DEFAULT NULL,
+
+    -- Scheduling & Organization
+    duration INTEGER DEFAULT NULL, -- needed for a drop (in bucket)
+    energy_level INTEGER NOT NULL DEFAULT 1, -- 1-3, higher means more intense task
+    priority INTEGER NOT NULL DEFAULT 1, -- 1-4, higher means higher priority
+    due_date INTEGER DEFAULT NULL, -- hard deadline for both a drop and a task (drop can have due date without scheduled time)
+    scheduled_start INTEGER DEFAULT NULL, -- null means it is a drop, it tells when the task is planned
+    is_auto_scheduled INTEGER NOT NULL DEFAULT 0, -- if scheduled automatically, so it can be rescheduled by a smart scheduler
+
+    -- Recurrence
+    recurrence_rule TEXT DEFAULT NULL, -- RRULE like (FREQ=WEEKLY;BYDAY=MO). If NULL, then it does not repeat
+    original_start_date INTEGER DEFAULT NULL, -- original start date of recurring rule
+    parent_task_id TEXT DEFAULT NULL, -- parent uuid of initial task for recurrence
+
+    -- Integrations, More
+    project_id TEXT DEFAULT NULL, -- yet unused, for future categorization
+    tags TEXT DEFAULT NULL, -- used as stringified JSON array like ["work", "important"]
+    reminder_profile_id INTEGER DEFAULT NULL, -- links to different table with reminder setup
+    context_trigger_id INTEGER DEFAULT NULL, -- links to table for smart states like for home assistant or gps.
+
+    -- Constraints
+    FOREIGN KEY(parent_task_id) REFERENCES tasks(id) ON DELETE CASCADE
+    -- FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE SET NULL
+    -- TODO foreign key for reminder_profile_id and context_trigger_id.
+);
+
+CREATE INDEX idx_tasks_sync ON tasks(is_dirty, updated_at);
+CREATE INDEX idx_tasks_parent ON tasks(parent_task_id);
+CREATE INDEX idx_tasks_status ON tasks(status);
+
+
+insertNonRecurringTask:
+INSERT INTO tasks (
+    id,
+    created_at,
+    updated_at,
+    title,
+    description
+)
+VALUES (
+    :id,
+    :createdAt,
+    :updatedAt,
+    :title,
+    :description
+);
+
+
+-- FOR TESTING, TODO REMOVE LATER
+
 CREATE TABLE taskEntity (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,

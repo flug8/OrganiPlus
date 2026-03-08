@@ -13,6 +13,7 @@ composeHotReload = "1.0.0"
 composeMultiplatform = "1.10.0"
 jewel = "0.34.0-253.31033.149"
 jna = "5.14.0"
+jnativehook = "2.2.2"
 junit = "4.13.2"
 kotlin = "2.3.0"
 kotlinx-coroutines = "1.10.2"
@@ -31,6 +32,7 @@ jewel-decorated-window = { module = "org.jetbrains.jewel:jewel-decorated-window"
 jewel-int-ui-decorated-window = { module = "org.jetbrains.jewel:jewel-int-ui-decorated-window", version.ref = "jewel" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
+jnativehook = { module = "com.github.kwhat:jnativehook", version.ref = "jnativehook" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-testJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { module = "junit:junit", version.ref = "junit" }

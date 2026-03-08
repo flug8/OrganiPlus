@@ -29,6 +29,7 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
 import li.flurin.organiplus.database.DatabaseHolder
+import li.flurin.organiplus.database.DatabaseManager
 
 import org.jetbrains.compose.resources.Font
 import organiplus.composeapp.generated.resources.Res
@@ -40,7 +41,7 @@ import kotlin.collections.emptyList
 fun HomeScreen() {
     TextLogo()
 
-    // ONLY TO TEST, REMOVE AGAIN AFTERWARDS
+    // ONLY TO TEST, REMOVE AGAIN AFTERWARDS TODO REMOVE LATER
     val queries = DatabaseHolder.db.taskDatabaseQueries
     val tasks by queries.getAllTasks()
         .asFlow()
@@ -62,7 +63,7 @@ fun HomeScreen() {
                 onClick = {
                     if (text.isNotBlank()) {
                         queries.insertTask(title = text, isCompleted = 0L)
-                        text = ""
+                        text = DatabaseManager.insertNonRecurringTask(text)
                     }
                 }
             ) {
