@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.application
+import li.flurin.organiplus.database.DatabaseHolder
+import li.flurin.organiplus.database.SqlDriverFactory
 import li.flurin.organiplus.screen.TextLogo
 import li.flurin.organiplus.ui.theme.AppTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -24,6 +26,9 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.awt.Dimension
 
 fun main() = application {
+
+    DatabaseHolder.init(SqlDriverFactory())
+    
     AppTheme {
         val isDark = isSystemInDarkTheme()
         IntUiTheme(

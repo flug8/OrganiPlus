@@ -1,0 +1,12 @@
+CREATE TABLE taskEntity (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    isCompleted INTEGER DEFAULT 0
+);
+
+getAllTasks:
+SELECT * FROM taskEntity;
+
+insertTask:
+INSERT OR REPLACE INTO taskEntity(title, isCompleted)
+VALUES (?, ?);

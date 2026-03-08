@@ -21,8 +21,11 @@ adaptive = "1.2.0"
 material3AdaptiveNavigationSuite = "1.9.0"
 materialIconsExtended = "1.7.3"
 roomRuntimeAndroid = "2.8.4"
+sqliteDriver = "2.2.1"
 
 [libraries]
+android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqliteDriver" }
+coroutines-extensions = { module = "app.cash.sqldelight:coroutines-extensions", version.ref = "sqliteDriver" }
 jewel-int-ui-standalone = { module = "org.jetbrains.jewel:jewel-int-ui-standalone", version.ref = "jewel" }
 jewel-decorated-window = { module = "org.jetbrains.jewel:jewel-decorated-window", version.ref = "jewel" }
 jewel-int-ui-decorated-window = { module = "org.jetbrains.jewel:jewel-int-ui-decorated-window", version.ref = "jewel" }
@@ -51,6 +54,7 @@ material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adapti
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3AdaptiveNavigationSuite" }
 material3-window-size-class1 = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "material3AdaptiveNavigationSuite" }
 androidx-room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
+sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqliteDriver" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

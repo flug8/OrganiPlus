@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    id("app.cash.sqldelight") version "2.2.1"
 }
 
 kotlin {
@@ -20,22 +21,13 @@ kotlin {
     jvm()
 
     jvmToolchain(21)
-    
-    js {
-        browser()
-        binaries.executable()
-    }
-    
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-        binaries.executable()
-    }
+
     
     sourceSets {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.android.driver)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -50,6 +42,7 @@ kotlin {
             implementation(libs.material3.adaptive.navigation.suite)
             implementation(libs.material.icons.extended)
             implementation(libs.material3.window.size.class1)
+            implementation(libs.coroutines.extensions)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -62,6 +55,7 @@ kotlin {
             implementation(libs.jewel.int.ui.decorated.window)
             implementation(libs.jna)
             implementation(libs.jna.platform)
+            implementation(libs.sqlite.driver)
         }
     }
 }
@@ -109,6 +103,15 @@ compose.desktop {
             windows {
                 console = true
             }
+        }
+    }
+}
+
+
+sqldelight {
+    databases {
+        create("TaskDatabase") {
+            packageName.set("li.flurin.organiplus")
         }
     }
 }
