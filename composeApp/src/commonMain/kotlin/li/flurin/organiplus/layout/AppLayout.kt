@@ -9,26 +9,43 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.UiComposable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import li.flurin.organiplus.screen.HomeScreen
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import organiplus.composeapp.generated.resources.Res
+import organiplus.composeapp.generated.resources.add_24px
+import organiplus.composeapp.generated.resources.assignment_24px
+import organiplus.composeapp.generated.resources.assignment_filled_24px
+import organiplus.composeapp.generated.resources.bucket_check_24px
+import organiplus.composeapp.generated.resources.bucket_check_filled_24px
+import organiplus.composeapp.generated.resources.home_24px
+import organiplus.composeapp.generated.resources.home_filled_24px
+import organiplus.composeapp.generated.resources.menu_24px
+import organiplus.composeapp.generated.resources.more_horiz_24px
 
 
-data class NavRoute(val title: String, val icon: ImageVector, val content: @Composable () -> Unit)
+data class NavRoute(
+    val title: String,
+    val icon: DrawableResource,
+    val iconSelected: DrawableResource,
+    val content: @Composable () -> Unit
+)
 
 @Composable
 fun AppLayout() {
     val routes = listOf(
-        NavRoute("Home", Icons.Default.Home) { HomeScreen() },
-        NavRoute("Bucket", Icons.Default.ExpandCircleDown) { DemoScreen("Bucket") },
-        NavRoute("Stats", Icons.Default.Leaderboard) { DemoScreen("Stats") },
-        NavRoute("Settings", Icons.Default.Settings) { DemoScreen("Settings") }
+        NavRoute("Home", Res.drawable.home_24px, Res.drawable.home_filled_24px) { HomeScreen() },
+        NavRoute("Bucket", Res.drawable.bucket_check_24px,Res.drawable.bucket_check_filled_24px) { DemoScreen("Bucket") },
+        NavRoute("Projects", Res.drawable.assignment_24px, Res.drawable.assignment_filled_24px) { DemoScreen("Stats") },
+        NavRoute("More", Res.drawable.more_horiz_24px,Res.drawable.more_horiz_24px) { DemoScreen("Settings") }
     )
 
     var currentRoute by remember { mutableStateOf(routes[0]) }
@@ -41,18 +58,19 @@ fun AppLayout() {
                 bottomBar = {
                     NavigationBar {
                         routes.forEach { route ->
+                            val selected = currentRoute == route
                             NavigationBarItem(
-                                selected = currentRoute == route,
+                                selected,
                                 onClick = { currentRoute = route },
-                                icon = { Icon(route.icon, contentDescription = route.title) },
-                                label = { Text(route.title) }
+                                icon = { Icon(painter = painterResource(if(selected) route.iconSelected else route.icon), contentDescription = route.title) },
+                                label = { Text(route.title, fontWeight = if(selected) FontWeight.Bold else FontWeight.Normal) }
                             )
                         }
                     }
                 },
                 floatingActionButton = {
                     FloatingActionButton(onClick = { /* TODO: Add Action */ }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add")
+                        Icon(painter = painterResource(Res.drawable.add_24px), contentDescription = "Add")
                     }
                 }
             ) { innerPadding ->
@@ -80,7 +98,7 @@ fun AppLayout() {
 
                             IconButton(onClick = { /* TODO: Add Drawer */}) {
                                 Icon(
-                                    imageVector = Icons.Default.Menu,
+                                    painter = painterResource(Res.drawable.menu_24px),
                                     contentDescription = "Toggle"
                                 )
                             }
@@ -90,18 +108,19 @@ fun AppLayout() {
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 elevation = FloatingActionButtonDefaults.elevation(0.dp)
                             ) {
-                                Icon(Icons.Default.Add, contentDescription = "Add")
+                                Icon(painter = painterResource(Res.drawable.add_24px), contentDescription = "Add")
                             }
                         }
                     }
                 ) {
                     Spacer(Modifier.height(16.dp))
                     routes.forEach { route ->
+                        val selected = currentRoute == route
                         NavigationRailItem(
-                            selected = currentRoute == route,
+                            selected,
                             onClick = { currentRoute = route },
-                            icon = { Icon(route.icon, contentDescription = null) },
-                            label = { Text(route.title) },
+                            icon = { Icon(painter = painterResource(if(selected) route.iconSelected else route.icon), contentDescription = null) },
+                            label = { Text(route.title, fontWeight = if(selected) FontWeight.Bold else FontWeight.Normal) },
                             alwaysShowLabel = true
                         )
                     }
@@ -137,4 +156,10 @@ fun DemoScreen(title: String) {
     Text(
         "Current Screen: ${title}"
     )
+}
+
+@Preview
+@Composable
+fun AppLayoutPreview() {
+    AppLayout()
 }

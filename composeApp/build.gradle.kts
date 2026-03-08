@@ -40,7 +40,6 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.material3.adaptive)
             implementation(libs.material3.adaptive.navigation.suite)
-            implementation(libs.material.icons.extended)
             implementation(libs.material3.window.size.class1)
             implementation(libs.coroutines.extensions)
         }
