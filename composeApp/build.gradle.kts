@@ -102,16 +102,18 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
 
+            includeAllModules = true
+
             modules("java.sql")
 
             packageName = "li.flurin.organiplus"
             packageVersion = "1.0.0"
 
-            javaHome = System.getProperty("java.home")
+            //javaHome = System.getProperty("java.home")
 
-            /*windows {
+            windows {
                 console = true
-            }*/
+            }
         }
     }
 }

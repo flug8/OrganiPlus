@@ -7,10 +7,31 @@ import java.io.File
 
 actual class SqlDriverFactory {
     actual fun createDriver(): SqlDriver {
-        val dbFile = File("tasks.db")
-        val driver = JdbcSqliteDriver("jdbc:sqlite:tasks.db")
+        val os = System.getProperty("os.name").lowercase()
+        val userHome = System.getProperty("user.home")
 
-        if (!dbFile.exists()){
+        val appDir = when  {
+            os.contains("win") -> {
+                val appData = System.getenv("APPDATA") ?: "$userHome\\AppData\\Roaming"
+                File(appData, "OrganiPlus")
+            }
+            os.contains("mac") -> {
+                File(userHome, "Library/Application Support/OrganiPlus")
+            }
+            else -> { //Linux
+                File(userHome, ".local/share/OrganiPlus")
+            }
+        }
+        if (!appDir.exists()) {
+            appDir.mkdirs()
+        }
+
+        val dbFile = File(appDir, "tasks.db")
+        val isNewDatabase = !dbFile.exists() || dbFile.length() == 0L
+
+        val driver = JdbcSqliteDriver("jdbc:sqlite:${dbFile.absolutePath}")
+
+        if (isNewDatabase){
             TaskDatabase.Schema.create(driver)
         }
         
