@@ -90,7 +90,7 @@ fun main(args: Array<String>) = application {
     }
 
     Tray(
-        icon = painterResource("icon-512.png"), // TODO Change Icon
+        icon = painterResource("OrganiPlus-300.png"), // TODO Change Icon
         tooltip = "OrganiPlus",
         menu = {
             Item("Open", onClick = {isMainWindowOpen = true})
