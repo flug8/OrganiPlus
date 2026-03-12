@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,11 +56,21 @@ import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import javax.swing.KeyStroke
 import com.tulskiy.keymaster.common.Provider
+import io.github.vinceglb.autolaunch.AutoLaunch
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import java.awt.Window
 
-fun main() = application {
+fun main(args: Array<String>) = application {
 
-    var isMainWindowOpen by remember { mutableStateOf(true)}
+    val autoLaunch = remember { AutoLaunch("com.yourdomain.yourapp") }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    var isAutoLaunchEnabled by remember { mutableStateOf(runBlocking { autoLaunch.isEnabled() }) }
+    var startedViaAutostart by remember { mutableStateOf(autoLaunch.isStartedViaAutostart()) }
+
+    var isMainWindowOpen by remember { mutableStateOf(!startedViaAutostart)}
 
 
     // ONLY FOR TESTING, TODO REMOVE LATER AGAIN
@@ -84,6 +95,25 @@ fun main() = application {
         menu = {
             Item("Open", onClick = {isMainWindowOpen = true})
             Item("Exit", onClick = ::exitApplication)
+            CheckboxItem(
+                text = "Launch on Startup",
+                checked = isAutoLaunchEnabled,
+                onCheckedChange = { isChecked ->
+                    isAutoLaunchEnabled = isChecked
+                    coroutineScope.launch {
+                        try {
+                            if (isChecked) {
+                                autoLaunch.enable()
+                            } else {
+                                autoLaunch.disable()
+                            }
+                            isAutoLaunchEnabled = autoLaunch.isEnabled()
+                        } catch (e: Exception) {
+                            println("Failed to toggle auto-launch: ${e.message}")
+                            isAutoLaunchEnabled = autoLaunch.isEnabled()
+                        }
+                    }
+                })
         },
         onAction = {isMainWindowOpen = true}
     )

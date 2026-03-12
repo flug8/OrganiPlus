@@ -60,6 +60,7 @@ kotlin {
             implementation(libs.jna.platform.v5181)
             implementation(libs.jkeymaster)
             implementation(libs.slf4j.simple)
+            implementation("io.github.vinceglb:auto-launch:0.8.0")
         }
     }
 }
@@ -112,7 +113,9 @@ compose.desktop {
             //javaHome = System.getProperty("java.home")
 
             windows {
-                console = true
+                console = true // TODO Remove
+                menu = true
+                menuGroup = "OrganiPlus"
             }
         }
     }
