@@ -265,14 +265,14 @@ fun main(args: Array<String>) = application {
                             if (isDark)
                                 TitleBarStyle.dark(
                                     colors = TitleBarColors.dark(
-                                        backgroundColor = MaterialTheme.colorScheme.background,
+                                        backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                         inactiveBackground = MaterialTheme.colorScheme.background
                                     )
                                 )
                             else
                                 TitleBarStyle.lightWithLightHeader(
                                     colors = TitleBarColors.lightWithLightHeader(
-                                        backgroundColor = MaterialTheme.colorScheme.background,
+                                        backgroundColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                         inactiveBackground = MaterialTheme.colorScheme.background
                                     )
                                 )

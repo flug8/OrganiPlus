@@ -107,13 +107,10 @@ compose.desktop {
 
             modules("java.sql")
 
-            packageName = "li.flurin.organiplus"
+            packageName = "OrganiPlus"
             packageVersion = "1.0.0"
 
-            //javaHome = System.getProperty("java.home")
-
             windows {
-                console = true // TODO Remove
                 menu = true
                 menuGroup = "OrganiPlus"
             }
