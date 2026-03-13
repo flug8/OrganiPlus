@@ -28,6 +28,7 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.android.driver)
+            implementation(libs.androidx.core.splashscreen)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -60,7 +61,7 @@ kotlin {
             implementation(libs.jna.platform.v5181)
             implementation(libs.jkeymaster)
             implementation(libs.slf4j.simple)
-            implementation("io.github.vinceglb:auto-launch:0.8.0")
+            implementation(libs.auto.launch)
         }
     }
 }

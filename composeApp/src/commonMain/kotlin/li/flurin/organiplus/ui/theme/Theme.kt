@@ -1,12 +1,13 @@
 package li.flurin.organiplus.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val lightScheme = lightColorScheme(
+val lightScheme = lightColorScheme(
     primary = Primary,
     onPrimary = OnPrimary,
     primaryContainer = PrimaryContainer,
@@ -32,7 +33,7 @@ private val lightScheme = lightColorScheme(
     outline = Outline
 )
 
-private val darkScheme = darkColorScheme(
+val darkScheme = darkColorScheme(
     primary = PrimaryDark,
     onPrimary = OnPrimaryDark,
     primaryContainer = PrimaryContainerDark,
@@ -58,26 +59,27 @@ private val darkScheme = darkColorScheme(
     outline = OutlineDark
 )
 
+@Composable
+expect fun getColorScheme(
+    darkTheme: Boolean,
+    dynamicColor: Boolean
+): ColorScheme
+
 
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    //dynamicColor: Boolean = true,
+    dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
-  val colorScheme = when {
-      /*dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-          val context = LocalContext.current
-          if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-      }*/
-      
-      darkTheme -> darkScheme
-      else -> lightScheme
-  }
+    val colorScheme = getColorScheme(
+        darkTheme = darkTheme,
+        dynamicColor = dynamicColor
+    )
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colorScheme,
+        content = content
+    )
 }
 
