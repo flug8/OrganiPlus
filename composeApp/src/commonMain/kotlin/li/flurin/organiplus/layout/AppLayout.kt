@@ -13,10 +13,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.UiComposable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import li.flurin.organiplus.NavNewTask
 import li.flurin.organiplus.screen.HomeScreen
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -40,7 +40,7 @@ data class NavRoute(
 )
 
 @Composable
-fun AppLayout() {
+fun AppLayout(onNavigate: (Any) -> Unit) {
     val routes = listOf(
         NavRoute("Home", Res.drawable.home_24px, Res.drawable.home_filled_24px) { HomeScreen() },
         NavRoute("Bucket", Res.drawable.bucket_check_24px,Res.drawable.bucket_check_filled_24px) { DemoScreen("Bucket") },
@@ -69,7 +69,7 @@ fun AppLayout() {
                     }
                 },
                 floatingActionButton = {
-                    FloatingActionButton(onClick = { /* TODO: Add Action */ }) {
+                    FloatingActionButton(onClick = { onNavigate(NavNewTask)/* TODO: Add Action */ }) {
                         Icon(painter = painterResource(Res.drawable.add_24px), contentDescription = "Add")
                     }
                 }
@@ -161,5 +161,5 @@ fun DemoScreen(title: String) {
 @Preview
 @Composable
 fun AppLayoutPreview() {
-    AppLayout()
+    AppLayout(onNavigate = {})
 }

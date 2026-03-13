@@ -20,6 +20,7 @@ kotlinx-coroutines = "1.10.2"
 material3 = "1.10.0-alpha05"
 adaptive = "1.2.0"
 material3AdaptiveNavigationSuite = "1.9.0"
+navigationCompose = "2.9.2"
 slf4jSimple = "2.0.17"
 sqliteDriver = "2.2.1"
 
@@ -52,6 +53,7 @@ kotlinx-coroutinesSwing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-s
 material3-adaptive = { module = "org.jetbrains.compose.material3.adaptive:adaptive", version.ref = "adaptive" }
 material3-adaptive-navigation-suite = { module = "org.jetbrains.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3AdaptiveNavigationSuite" }
 material3-window-size-class1 = { module = "org.jetbrains.compose.material3:material3-window-size-class", version.ref = "material3AdaptiveNavigationSuite" }
+navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqliteDriver" }
 

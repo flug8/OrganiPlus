@@ -2,6 +2,8 @@ package li.flurin.organiplus.database
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import li.flurin.organiplus.JVMPlatform
+import li.flurin.organiplus.OSType
 import li.flurin.organiplus.TaskDatabase
 import java.io.File
 
@@ -10,15 +12,15 @@ actual class SqlDriverFactory {
         val os = System.getProperty("os.name").lowercase()
         val userHome = System.getProperty("user.home")
 
-        val appDir = when  {
-            os.contains("win") -> {
+        val appDir = when (JVMPlatform().osType)  {
+            OSType.WINDOWS -> {
                 val appData = System.getenv("APPDATA") ?: "$userHome\\AppData\\Roaming"
                 File(appData, "OrganiPlus")
             }
-            os.contains("mac") -> {
+            OSType.MACOS -> {
                 File(userHome, "Library/Application Support/OrganiPlus")
             }
-            else -> { //Linux
+            OSType.LINUX, OSType.UNKNOWN -> {
                 File(userHome, ".local/share/OrganiPlus")
             }
         }

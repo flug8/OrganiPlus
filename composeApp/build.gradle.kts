@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    kotlin("plugin.serialization") version "2.3.0"
     id("app.cash.sqldelight") version "2.2.1"
 }
 
@@ -43,6 +44,7 @@ kotlin {
             implementation(libs.material3.adaptive.navigation.suite)
             implementation(libs.material3.window.size.class1)
             implementation(libs.coroutines.extensions)
+            implementation(libs.navigation.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
