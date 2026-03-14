@@ -29,30 +29,49 @@ import androidx.compose.ui.text.font.FontWeight
 import organiplus.composeapp.generated.resources.home_filled_24px
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.DrawableResource
+import organiplus.composeapp.generated.resources.add_24px
 import organiplus.composeapp.generated.resources.add_big_24px
+import organiplus.composeapp.generated.resources.arrow_back_24px
+import organiplus.composeapp.generated.resources.assignment_24px
+import organiplus.composeapp.generated.resources.assignment_late_24px
 import organiplus.composeapp.generated.resources.bolt_filled_24px
 import organiplus.composeapp.generated.resources.bucket_check_24px
 import organiplus.composeapp.generated.resources.bucket_check_filled_24px
+import organiplus.composeapp.generated.resources.date_range_24px
+import organiplus.composeapp.generated.resources.extension_24px
 import organiplus.composeapp.generated.resources.flag_24px
 import organiplus.composeapp.generated.resources.flag_filled_24px
+import organiplus.composeapp.generated.resources.hourglass_24px
+import organiplus.composeapp.generated.resources.notifications_active_24px
+import organiplus.composeapp.generated.resources.release_alert_24px
+import organiplus.composeapp.generated.resources.repeat_24px
 import organiplus.composeapp.generated.resources.save_filled_24px
+import organiplus.composeapp.generated.resources.tag_24px
 import organiplus.composeapp.generated.resources.wand_shine_24px
 import organiplus.composeapp.generated.resources.wand_shine_filled_24px
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NewTaskScreen(
     onBack: () -> Unit
@@ -71,12 +90,45 @@ fun NewTaskScreen(
     var energyState by remember { mutableIntStateOf(1) }
 
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(100)
+        delay(100)
         titleFocusRequester.requestFocus()
         keyboardController?.show()
     }
 
+    val scrollState = rememberScrollState()
+    val showTopBarTitle by remember {
+        derivedStateOf { scrollState.value > 150 }
+    }
+
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
+                    AnimatedVisibility(
+                        visible = showTopBarTitle && title.isNotBlank(),
+                        enter = fadeIn() + slideInVertically { it / 2 },
+                        exit = fadeOut() + slideOutVertically { it / 2 }
+                    ) {
+                        Text(
+                            text = title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            painterResource(Res.drawable.arrow_back_24px),
+                            contentDescription = "Go back"
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
+        },
         floatingActionButtonPosition = FabPosition.Center,
         contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
@@ -152,16 +204,13 @@ fun NewTaskScreen(
         }
     ) { paddingValues ->
 
-        // TODO Edit, only temporary placeholder, idk if this design will be final
+        // TODO: Edit, only temporary placeholder, idk if this design will be final
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
-                .imePadding()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(paddingValues)
                 .padding(horizontal = 20.dp)
         ) {
@@ -196,7 +245,8 @@ fun NewTaskScreen(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { descriptionFocusRequester.requestFocus()}
-                    )
+                    ),
+                    maxLines = 1
                 )
 
                 TextField(
@@ -232,55 +282,73 @@ fun NewTaskScreen(
                         NewTaskCardItem(
                             headline = "Scheduled Start",
                             supportingText = "When to do this",
-                            icon = painterResource(Res.drawable.home_filled_24px),
+                            icon = painterResource(Res.drawable.date_range_24px),
                             trailingText = "Tomorrow, 10:00 AM"
                         )
                         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                         NewTaskCardItem(
                             headline = "Repeat",
-                            icon = painterResource(Res.drawable.home_filled_24px),
+                            icon = painterResource(Res.drawable.repeat_24px),
                             trailingText = "Weekly"
                         )
-
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Reminders",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                FilterChip(
-                                    selected = true,
-                                    onClick = { },
-                                    label = { Text("At start time") },
-                                    leadingIcon = {
-                                        Icon(
-                                            painterResource(Res.drawable.home_filled_24px),
-                                            null,
-                                            Modifier.size(16.dp)
-                                        )
-                                    }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    painterResource(Res.drawable.notifications_active_24px),
+                                    null,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
-                                FilterChip(
-                                    selected = true,
-                                    onClick = { },
-                                    label = { Text("10m before") }
-                                )
-                                AssistChip(
-                                    onClick = { },
-                                    label = { Text("Add reminder") },
-                                    leadingIcon = {
-                                        Icon(
-                                            painterResource(Res.drawable.home_filled_24px),
-                                            null,
-                                            Modifier.size(16.dp)
-                                        )
-                                    }
-                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    InputChip(
+                                        selected = false,
+                                        onClick = { },
+                                        label = { Text("On Scheduled") },
+                                    )
+                                    InputChip(
+                                        selected = false,
+                                        onClick = { },
+                                        label = { Text("Agressive") },
+                                    )
+                                    AssistChip(
+                                        onClick = { },
+                                        label = {
+                                            Icon(
+                                                painterResource(Res.drawable.add_24px),
+                                                "Remove Reminder"
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Spacer(modifier = Modifier.width((16 + 24).dp))
+                                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    InputChip(
+                                        selected = false,
+                                        onClick = { },
+                                        label = { Text("Deep Work") },
+                                        trailingIcon = {
+                                            Icon(
+                                                painterResource(Res.drawable.home_filled_24px),
+                                                null,
+                                                Modifier.size(16.dp)
+                                            )
+                                        }
+                                    )
+                                    AssistChip(
+                                        onClick = { },
+                                        label = { Text("Add tag") },
+                                        leadingIcon = {
+                                            Icon(
+                                                painterResource(Res.drawable.home_filled_24px),
+                                                null,
+                                                Modifier.size(16.dp)
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -292,14 +360,14 @@ fun NewTaskScreen(
                 NewTaskCardItem(
                     headline = "Duration",
                     supportingText = "Estimated time to complete",
-                    icon = painterResource(Res.drawable.home_filled_24px),
+                    icon = painterResource(Res.drawable.hourglass_24px),
                     trailingText = "15m" // Dummy state
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 NewTaskCardItem(
                     headline = "Due Date",
                     supportingText = "Hard deadline",
-                    icon = painterResource(Res.drawable.home_filled_24px),
+                    icon = painterResource(Res.drawable.assignment_late_24px),
                     trailingText = "None"
                 )
             }
@@ -309,27 +377,26 @@ fun NewTaskScreen(
             NewTaskCard {
                 NewTaskCardItem(
                     headline = "Project",
-                    icon = painterResource(Res.drawable.home_filled_24px),
+                    icon = painterResource(Res.drawable.assignment_24px),
                     trailingText = "Inbox"
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
                 // Tags
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(painterResource(Res.drawable.home_filled_24px), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Icon(painterResource(Res.drawable.tag_24px), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.width(16.dp))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             InputChip(
                                 selected = false,
                                 onClick = { },
                                 label = { Text("Deep Work") },
-                                trailingIcon = { Icon(painterResource(Res.drawable.home_filled_24px), null, Modifier.size(16.dp)) }
                             )
                             AssistChip(
                                 onClick = { },
                                 label = { Text("Add tag") },
-                                leadingIcon = { Icon(painterResource(Res.drawable.home_filled_24px), null, Modifier.size(16.dp)) }
+                                leadingIcon = { Icon(painterResource(Res.drawable.add_24px), null, Modifier.size(16.dp)) }
                             )
                         }
                     }
@@ -339,7 +406,7 @@ fun NewTaskScreen(
                 NewTaskCardItem(
                     headline = "Smart Context",
                     supportingText = "Trigger when conditions are met",
-                    icon = painterResource(Res.drawable.home_filled_24px),
+                    icon = painterResource(Res.drawable.extension_24px),
                     trailingText = "Setup"
                 )
             }
@@ -401,7 +468,7 @@ fun ToolbarItemSelect(
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         ) {
             Icon(
-                painter = painterResource(activeItem?.icon ?: Res.drawable.flag_24px),
+                painter = painterResource(activeItem?.icon ?: Res.drawable.release_alert_24px),
                 contentDescription = "Select",
                 tint = activeItem?.color ?: LocalContentColor.current
             )
