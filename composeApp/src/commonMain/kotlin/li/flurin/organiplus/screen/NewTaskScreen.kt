@@ -34,8 +34,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import org.jetbrains.compose.resources.DrawableResource
 import organiplus.composeapp.generated.resources.add_big_24px
@@ -75,76 +78,77 @@ fun NewTaskScreen(
 
     Scaffold(
         floatingActionButtonPosition = FabPosition.Center,
+        contentWindowInsets = WindowInsets.safeDrawing,
         floatingActionButton = {
-            Box(modifier = Modifier.imePadding()) {
-                HorizontalFloatingToolbar( // TODO Fix big padding when IME active
-                    expanded = isExpanded,
-                    floatingActionButton = {
-                        FloatingToolbarDefaults.StandardFloatingActionButton(
-                            onClick = { /* TODO: Save and Close */ }
-                        ) {
-                            Icon(
-                                painterResource(Res.drawable.save_filled_24px),
-                                contentDescription = "Save and Close"
-                            )
-                        }
-                    },
-                    content = {
-                        ToolbarItemToggle(
-                            condition = isSmartSchedule,
-                            icon = Res.drawable.wand_shine_24px,
-                            iconSelected = Res.drawable.wand_shine_filled_24px
-                        ) {
-                            isSmartSchedule = !isSmartSchedule
-                        }
-                        ToolbarItemToggle(
-                            condition = isDrop,
-                            icon = Res.drawable.bucket_check_24px,
-                            iconSelected = Res.drawable.bucket_check_filled_24px
-                        ) {
-                            isDrop = !isDrop
-                        }
-                        ToolbarItemSelect(
-                            list = listOf(
-                                SelectItem(5,"Urgent", Res.drawable.flag_filled_24px, Color(0xFFD72638)),
-                                SelectItem(4,"High", Res.drawable.flag_filled_24px, Color(0xFFF4900C)),
-                                SelectItem(3,"Medium", Res.drawable.flag_filled_24px, Color(0xFF3F88C5)),
-                                SelectItem(2,"Low", Res.drawable.flag_filled_24px, Color(0xFF429E46)),
-                                SelectItem(1,"None", Res.drawable.flag_24px, LocalContentColor.current),
-                            ),
-                            state = priorityState
-                        ) { state ->
-                            priorityState = state
-                        }
-                        ToolbarItemSelect(
-                                list = listOf(
-                                    SelectItem(3,"High", Res.drawable.bolt_filled_24px, Color(0xFFD72638)),
-                                    SelectItem(2,"Medium", Res.drawable.bolt_filled_24px, Color(0xFFF4900C)),
-                                    SelectItem(1,"Low", Res.drawable.bolt_filled_24px, Color(0xFF429E46)),
-                                ),
-                        state = energyState
-                        ) { state ->
-                        energyState = state
-                    }
-                        VerticalDivider(
-                            modifier = Modifier
-                                .height(24.dp)
-                                .padding(horizontal = 4.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+            HorizontalFloatingToolbar(
+                expanded = isExpanded,
+                floatingActionButton = {
+                    FloatingToolbarDefaults.StandardFloatingActionButton(
+                        onClick = { /* TODO: Save and Close */ }
+                    ) {
+                        Icon(
+                            painterResource(Res.drawable.save_filled_24px),
+                            contentDescription = "Save and Close"
                         )
-                        ToolbarItemToggle(
-                            condition = false,
-                            icon = Res.drawable.add_big_24px,
-                            iconSelected = Res.drawable.add_big_24px
-                        ) {
-                            // TODO: Save and New Task
-                        }
-                    },
-                    colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
-                        toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    }
+                },
+                content = {
+                    ToolbarItemToggle(
+                        condition = isSmartSchedule,
+                        icon = Res.drawable.wand_shine_24px,
+                        iconSelected = Res.drawable.wand_shine_filled_24px
+                    ) {
+                        isSmartSchedule = !isSmartSchedule
+                        isDrop = false
+                    }
+                    ToolbarItemToggle(
+                        condition = isDrop,
+                        icon = Res.drawable.bucket_check_24px,
+                        iconSelected = Res.drawable.bucket_check_filled_24px
+                    ) {
+                        isDrop = !isDrop
+                        isSmartSchedule = false
+                    }
+                    ToolbarItemSelect(
+                        list = listOf(
+                            SelectItem(5,"Urgent", Res.drawable.flag_filled_24px, Color(0xFFD72638)),
+                            SelectItem(4,"High", Res.drawable.flag_filled_24px, Color(0xFFF4900C)),
+                            SelectItem(3,"Medium", Res.drawable.flag_filled_24px, Color(0xFF3F88C5)),
+                            SelectItem(2,"Low", Res.drawable.flag_filled_24px, Color(0xFF429E46)),
+                            SelectItem(1,"None", Res.drawable.flag_24px, LocalContentColor.current),
+                        ),
+                        state = priorityState
+                    ) { state ->
+                        priorityState = state
+                    }
+                    ToolbarItemSelect(
+                            list = listOf(
+                                SelectItem(3,"High", Res.drawable.bolt_filled_24px, Color(0xFFD72638)),
+                                SelectItem(2,"Medium", Res.drawable.bolt_filled_24px, Color(0xFFF4900C)),
+                                SelectItem(1,"Low", Res.drawable.bolt_filled_24px, Color(0xFF429E46)),
+                            ),
+                    state = energyState
+                    ) { state ->
+                    energyState = state
+                }
+                    VerticalDivider(
+                        modifier = Modifier
+                            .height(24.dp)
+                            .padding(horizontal = 4.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
                     )
+                    ToolbarItemToggle(
+                        condition = false,
+                        icon = Res.drawable.add_big_24px,
+                        iconSelected = Res.drawable.add_big_24px
+                    ) {
+                        // TODO: Save and New Task
+                    }
+                },
+                colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
+                    toolbarContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 )
-            }
+            )
         }
     ) { paddingValues ->
 
@@ -159,8 +163,7 @@ fun NewTaskScreen(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
-                .padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(horizontal = 20.dp)
         ) {
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -224,49 +227,64 @@ fun NewTaskScreen(
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
-                NewTaskCard {
-                    NewTaskCardItem(
-                        headline = "Scheduled Start",
-                        supportingText = "When to do this",
-                        icon = painterResource(Res.drawable.home_filled_24px),
-                        trailingText = "Tomorrow, 10:00 AM"
-                    )
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                    NewTaskCardItem(
-                        headline = "Repeat",
-                        icon = painterResource(Res.drawable.home_filled_24px),
-                        trailingText = "Weekly"
-                    )
-
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Reminders",
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(bottom = 8.dp)
+                Column {
+                    NewTaskCard {
+                        NewTaskCardItem(
+                            headline = "Scheduled Start",
+                            supportingText = "When to do this",
+                            icon = painterResource(Res.drawable.home_filled_24px),
+                            trailingText = "Tomorrow, 10:00 AM"
                         )
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            FilterChip(
-                                selected = true,
-                                onClick = { },
-                                label = { Text("At start time") },
-                                leadingIcon = { Icon(painterResource(Res.drawable.home_filled_24px), null, Modifier.size(16.dp)) }
+                        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                        NewTaskCardItem(
+                            headline = "Repeat",
+                            icon = painterResource(Res.drawable.home_filled_24px),
+                            trailingText = "Weekly"
+                        )
+
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Reminders",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 8.dp)
                             )
-                            FilterChip(
-                                selected = true,
-                                onClick = { },
-                                label = { Text("10m before") }
-                            )
-                            AssistChip(
-                                onClick = { },
-                                label = { Text("Add reminder") },
-                                leadingIcon = { Icon(painterResource(Res.drawable.home_filled_24px), null, Modifier.size(16.dp)) }
-                            )
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = true,
+                                    onClick = { },
+                                    label = { Text("At start time") },
+                                    leadingIcon = {
+                                        Icon(
+                                            painterResource(Res.drawable.home_filled_24px),
+                                            null,
+                                            Modifier.size(16.dp)
+                                        )
+                                    }
+                                )
+                                FilterChip(
+                                    selected = true,
+                                    onClick = { },
+                                    label = { Text("10m before") }
+                                )
+                                AssistChip(
+                                    onClick = { },
+                                    label = { Text("Add reminder") },
+                                    leadingIcon = {
+                                        Icon(
+                                            painterResource(Res.drawable.home_filled_24px),
+                                            null,
+                                            Modifier.size(16.dp)
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
+                    Spacer(Modifier.height(24.dp))
                 }
             }
 
@@ -285,6 +303,8 @@ fun NewTaskScreen(
                     trailingText = "None"
                 )
             }
+
+            Spacer(Modifier.height(24.dp))
 
             NewTaskCard {
                 NewTaskCardItem(
@@ -361,6 +381,9 @@ data class SelectItem(
     val icon: DrawableResource,
     val color: Color
 )
+
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ToolbarItemSelect(
     list: List<SelectItem>,
@@ -368,50 +391,50 @@ fun ToolbarItemSelect(
     onStateChange: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box {
-        IconButton(onClick = { expanded = !expanded }) {
-            val active = list.find{it.state == state}
+    val activeItem = list.find { it.state == state}
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it}
+    ) {
+        IconButton(
+            onClick = { },
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+        ) {
             Icon(
-                painterResource(active?.icon ?: Res.drawable.flag_24px),
+                painter = painterResource(activeItem?.icon ?: Res.drawable.flag_24px),
                 contentDescription = "Select",
-                tint = active?.color ?: LocalContentColor.current
+                tint = activeItem?.color ?: LocalContentColor.current
             )
         }
-        MaterialTheme(
-            shapes = MaterialTheme.shapes.copy(
-                extraSmall = RoundedCornerShape(percent = 50)
-            )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = RoundedCornerShape(percent = 50),
+            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(horizontal = 6.dp),
+            properties = PopupProperties(focusable = false),
+            offset = DpOffset(x = (-2).dp, y = 0.dp)
         ) {
-            DropdownMenu( // TODO Alignment of Dropdown not perfect
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainerHigh),
-                properties = PopupProperties(focusable = false)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp)
-                ) {
-
-                    list.forEach { item ->
-                        IconButton(
-                            modifier = Modifier.size(40.dp),
-                            onClick = {
-                                onStateChange(item.state)
-                                expanded = false
-                            },
-                            colors =
-                                if(item.state == state) IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                                else IconButtonDefaults.iconButtonColors()
-                        ) {
-                            Icon(
-                                painter = painterResource(item.icon),
-                                contentDescription = item.name,
-                                tint = item.color // Default: MaterialTheme.colorScheme.onSurfaceVariant or just LocalContentColor.current
-                            )
+            list.forEach { item ->
+                val isSelected = item.state == state
+                IconButton(
+                    modifier = Modifier.size(40.dp),
+                    onClick = {
+                        onStateChange(item.state)
+                        expanded = false
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer
+                        }else {
+                            Color.Transparent
                         }
-                    }
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(item.icon),
+                        contentDescription = item.name,
+                        tint = item.color // Default: MaterialTheme.colorScheme.onSurfaceVariant or just LocalContentColor.current
+                    )
                 }
             }
         }
@@ -482,6 +505,6 @@ fun NewTaskCardItem(
 
 @Preview
 @Composable
-fun NewNewTaskScreenPreview() {
+fun NewTaskScreenPreview() {
     NewTaskScreen {}
 }
