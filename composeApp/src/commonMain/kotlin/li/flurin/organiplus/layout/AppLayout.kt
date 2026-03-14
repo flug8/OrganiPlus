@@ -1,3 +1,5 @@
+@file:Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
+
 package li.flurin.organiplus.layout
 
 import androidx.compose.animation.AnimatedContent
@@ -71,7 +73,7 @@ fun AppLayout(onNavigate: (Any) -> Unit) {
                     }
                 },
                 floatingActionButton = {
-                    FloatingActionButton(onClick = { onNavigate(NavNewTask)/* TODO: Add Action */ }) {
+                    FloatingActionButton(onClick = { onNavigate(NavNewTask) }) {
                         Icon(painter = painterResource(Res.drawable.add_24px), contentDescription = "Add")
                     }
                 }
@@ -156,7 +158,7 @@ fun AppLayout(onNavigate: (Any) -> Unit) {
 @Composable
 fun DemoScreen(title: String) {
     Text(
-        "Current Screen: ${title}"
+        "Current Screen: $title"
     )
 }
 

@@ -1,57 +1,92 @@
 package li.flurin.organiplus.screen
 
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import org.jetbrains.compose.resources.painterResource
-import organiplus.composeapp.generated.resources.Res
 
-
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.text.font.FontWeight
-import organiplus.composeapp.generated.resources.home_filled_24px
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.HorizontalFloatingToolbar
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpOffset
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.window.Popup
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.delay
+import li.flurin.organiplus.NavNewTask
+import li.flurin.organiplus.models.EnergyLevel
+import li.flurin.organiplus.models.Priority
+import li.flurin.organiplus.viewmodel.NewTaskViewModel
 import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import organiplus.composeapp.generated.resources.Res
 import organiplus.composeapp.generated.resources.add_24px
 import organiplus.composeapp.generated.resources.add_big_24px
 import organiplus.composeapp.generated.resources.arrow_back_24px
@@ -64,6 +99,7 @@ import organiplus.composeapp.generated.resources.date_range_24px
 import organiplus.composeapp.generated.resources.extension_24px
 import organiplus.composeapp.generated.resources.flag_24px
 import organiplus.composeapp.generated.resources.flag_filled_24px
+import organiplus.composeapp.generated.resources.home_filled_24px
 import organiplus.composeapp.generated.resources.hourglass_24px
 import organiplus.composeapp.generated.resources.notifications_active_24px
 import organiplus.composeapp.generated.resources.release_alert_24px
@@ -77,7 +113,9 @@ import organiplus.composeapp.generated.resources.wand_shine_filled_24px
 @OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NewTaskScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigate: (Any) -> Unit,
+    viewModel: NewTaskViewModel = viewModel(factory = NewTaskViewModel.Factory)
 ) {
     var isExpanded by remember { mutableStateOf(true) }
 
@@ -85,12 +123,15 @@ fun NewTaskScreen(
     val descriptionFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var isDrop by remember { mutableStateOf(false) }
-    var isSmartSchedule by remember { mutableStateOf(false) }
-    var priorityState by remember { mutableIntStateOf(1) }
-    var energyState by remember { mutableIntStateOf(1) }
+
+    LaunchedEffect(Unit) {
+        viewModel.navigationEvent.collect { target ->
+            when (target) {
+                is NewTaskViewModel.NavTarget.Back -> onBack()
+                is NewTaskViewModel.NavTarget.NewTask -> onNavigate(NavNewTask)
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         delay(100)
@@ -111,12 +152,12 @@ fun NewTaskScreen(
                 title = {
                     AnimatedVisibility(
                         modifier = Modifier.padding(end = 16.dp).offset(x = 16.dp),
-                        visible = showTopBarTitle && title.isNotBlank(),
+                        visible = showTopBarTitle && viewModel.title.isNotBlank(),
                         enter = fadeIn() + slideInVertically { it / 2 },
                         exit = fadeOut() + slideOutVertically { it / 2 }
                     ) {
                         Text(
-                            text = title,
+                            text = viewModel.title,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -145,7 +186,9 @@ fun NewTaskScreen(
                 expanded = isExpanded,
                 floatingActionButton = {
                     FloatingToolbarDefaults.StandardFloatingActionButton(
-                        onClick = { /* TODO: Save and Close */ }
+                        onClick = {
+                            viewModel.saveAndExit()
+                        }
                     ) {
                         Icon(
                             painterResource(Res.drawable.save_filled_24px),
@@ -155,42 +198,42 @@ fun NewTaskScreen(
                 },
                 content = {
                     ToolbarItemToggle(
-                        condition = isSmartSchedule,
+                        condition = viewModel.isSmartSchedule,
                         icon = Res.drawable.wand_shine_24px,
                         iconSelected = Res.drawable.wand_shine_filled_24px
                     ) {
-                        isSmartSchedule = !isSmartSchedule
-                        isDrop = false
+                        viewModel.isSmartSchedule = !viewModel.isSmartSchedule
+                        viewModel.isDrop = false
                     }
                     ToolbarItemToggle(
-                        condition = isDrop,
+                        condition = viewModel.isDrop,
                         icon = Res.drawable.bucket_check_24px,
                         iconSelected = Res.drawable.bucket_check_filled_24px
                     ) {
-                        isDrop = !isDrop
-                        isSmartSchedule = false
+                        viewModel.isDrop = !viewModel.isDrop
+                        viewModel.isSmartSchedule = false
                     }
                     ToolbarItemSelect(
                         list = listOf(
-                            SelectItem(5,"Urgent", Res.drawable.flag_filled_24px, Color(0xFFD72638)),
-                            SelectItem(4,"High", Res.drawable.flag_filled_24px, Color(0xFFF4900C)),
-                            SelectItem(3,"Medium", Res.drawable.flag_filled_24px, Color(0xFF3F88C5)),
-                            SelectItem(2,"Low", Res.drawable.flag_filled_24px, Color(0xFF429E46)),
-                            SelectItem(1,"None", Res.drawable.flag_24px, LocalContentColor.current),
+                            SelectItem(Priority.URGENT,"Urgent", Res.drawable.flag_filled_24px, Color(0xFFD72638)),
+                            SelectItem(Priority.HIGH,"High", Res.drawable.flag_filled_24px, Color(0xFFF4900C)),
+                            SelectItem(Priority.NORMAL,"Normal", Res.drawable.flag_filled_24px, Color(0xFF3F88C5)),
+                            SelectItem(Priority.LOW,"Low", Res.drawable.flag_filled_24px, Color(0xFF429E46)),
+                            SelectItem(Priority.NONE,"None", Res.drawable.flag_24px, LocalContentColor.current),
                         ),
-                        state = priorityState
+                        state = viewModel.priorityState
                     ) { state ->
-                        priorityState = state
+                        viewModel.priorityState = state
                     }
                     ToolbarItemSelect(
                             list = listOf(
-                                SelectItem(3,"High", Res.drawable.bolt_filled_24px, Color(0xFFD72638)),
-                                SelectItem(2,"Medium", Res.drawable.bolt_filled_24px, Color(0xFFF4900C)),
-                                SelectItem(1,"Low", Res.drawable.bolt_filled_24px, Color(0xFF429E46)),
+                                SelectItem(EnergyLevel.HIGH,"High", Res.drawable.bolt_filled_24px, Color(0xFFD72638)),
+                                SelectItem(EnergyLevel.MEDIUM,"Medium", Res.drawable.bolt_filled_24px, Color(0xFFF4900C)),
+                                SelectItem(EnergyLevel.LOW,"Low", Res.drawable.bolt_filled_24px, Color(0xFF429E46)),
                             ),
-                    state = energyState
+                    state = viewModel.energyState
                     ) { state ->
-                    energyState = state
+                        viewModel.energyState = state
                 }
                     VerticalDivider(
                         modifier = Modifier
@@ -203,7 +246,7 @@ fun NewTaskScreen(
                         icon = Res.drawable.add_big_24px,
                         iconSelected = Res.drawable.add_big_24px
                     ) {
-                        // TODO: Save and New Task
+                        viewModel.saveAndNext()
                     }
                 },
                 colors = FloatingToolbarDefaults.standardFloatingToolbarColors(
@@ -228,8 +271,8 @@ fun NewTaskScreen(
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextField(
-                    value = title,
-                    onValueChange = { title = it },
+                    value = viewModel.title,
+                    onValueChange = { viewModel.title = it },
                     placeholder = {
                         Text(
                             "Task Name",
@@ -258,8 +301,8 @@ fun NewTaskScreen(
                 )
 
                 TextField(
-                    value = description,
-                    onValueChange = { description = it },
+                    value = viewModel.description,
+                    onValueChange = { viewModel.description = it },
                     placeholder = {
                         Text(
                             "Add details, notes, or links...",
@@ -281,7 +324,7 @@ fun NewTaskScreen(
             }
 
             AnimatedVisibility(
-                visible = !isDrop,
+                visible = !viewModel.isDrop,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
@@ -317,7 +360,7 @@ fun NewTaskScreen(
                                     InputChip(
                                         selected = false,
                                         onClick = { },
-                                        label = { Text("Agressive") },
+                                        label = { Text("Aggressive") },
                                     )
                                     AssistChip(
                                         onClick = { },
@@ -450,8 +493,8 @@ fun ToolbarItemToggle(
 
 
 
-data class SelectItem(
-    val state: Int,
+data class SelectItem<T>(
+    val state: T,
     val name: String,
     val icon: DrawableResource,
     val color: Color
@@ -460,10 +503,10 @@ data class SelectItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ToolbarItemSelect(
-    list: List<SelectItem>,
-    state: Int,
-    onStateChange: (Int) -> Unit
+fun <T> ToolbarItemSelect(
+    list: List<SelectItem<T>>,
+    state: T,
+    onStateChange: (T) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val activeItem = list.find { it.state == state}
@@ -581,5 +624,5 @@ fun NewTaskCardItem(
 @Preview
 @Composable
 fun NewTaskScreenPreview() {
-    NewTaskScreen {}
+    NewTaskScreen({},{})
 }

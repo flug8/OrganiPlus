@@ -61,9 +61,13 @@ import kotlinx.coroutines.runBlocking
 import li.flurin.organiplus.composable.TextLogo
 import java.awt.Window
 
+actual fun kmpLog(tag: String, message: String, isError: Boolean) {
+    println("${if (isError) "E:" else "D:"} [$tag] $message")
+}
+
 fun main(args: Array<String>) = application {
 
-    val autoLaunch = remember { AutoLaunch("com.yourdomain.yourapp") }
+    val autoLaunch = remember { AutoLaunch("li.flurin.organiplus") }
 
     val coroutineScope = rememberCoroutineScope()
 

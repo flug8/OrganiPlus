@@ -47,8 +47,7 @@ fun DemoTaskScreen() { // TODO: Remove later
                 modifier = Modifier.padding(start = 8.dp),
                 onClick = {
                     if (text.isNotBlank()) {
-                        queries.insertTask(title = text, isCompleted = 0L)
-                        text = DatabaseManager.insertNonRecurringTask(text)
+                        text = DatabaseManager.insertNonRecurringTaskMinimal(text)
                     }
                 }
             ) {

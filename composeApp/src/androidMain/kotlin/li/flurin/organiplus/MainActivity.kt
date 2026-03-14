@@ -7,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowCompat
 import li.flurin.organiplus.database.DatabaseHolder
 import li.flurin.organiplus.database.SqlDriverFactory
 
@@ -22,6 +21,11 @@ class MainActivity : ComponentActivity() {
             App()
         }
     }
+}
+
+actual fun kmpLog(tag: String, message: String, isError: Boolean) {
+    if (isError) android.util.Log.e(tag, message)
+    else android.util.Log.d(tag, message)
 }
 
 @Preview

@@ -22,6 +22,9 @@ import li.flurin.organiplus.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
+
+expect fun kmpLog(tag: String, message: String, isError: Boolean = false)
+
 @Serializable object NavLayout
 @Serializable object NavNewTask
 @Serializable object NavSettings
@@ -82,7 +85,16 @@ fun App() {
                     )
                 }
                 composable<NavNewTask> {
-                    NewTaskScreen { navController.popBackStack() }
+                    NewTaskScreen(
+                        onBack = { navController.popBackStack() },
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                if (route is NavNewTask) {
+                                    popUpTo<NavNewTask> { inclusive = true}
+                                }
+                            }
+                        }
+                    )
                 }
 
                 /*composable<TaskDetails> { backStackEntry ->

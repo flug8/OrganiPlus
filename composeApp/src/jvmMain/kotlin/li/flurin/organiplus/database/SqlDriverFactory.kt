@@ -9,7 +9,6 @@ import java.io.File
 
 actual class SqlDriverFactory {
     actual fun createDriver(): SqlDriver {
-        val os = System.getProperty("os.name").lowercase()
         val userHome = System.getProperty("user.home")
 
         val appDir = when (JVMPlatform().osType)  {
