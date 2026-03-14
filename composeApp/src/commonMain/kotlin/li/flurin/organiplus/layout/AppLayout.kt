@@ -17,7 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import li.flurin.organiplus.NavNewTask
+import li.flurin.organiplus.screen.DemoTaskScreen
 import li.flurin.organiplus.screen.HomeScreen
+import li.flurin.organiplus.screen.MoreScreen
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import organiplus.composeapp.generated.resources.Res
@@ -43,9 +45,9 @@ data class NavRoute(
 fun AppLayout(onNavigate: (Any) -> Unit) {
     val routes = listOf(
         NavRoute("Home", Res.drawable.home_24px, Res.drawable.home_filled_24px) { HomeScreen() },
-        NavRoute("Bucket", Res.drawable.bucket_check_24px,Res.drawable.bucket_check_filled_24px) { DemoScreen("Bucket") },
+        NavRoute("Bucket", Res.drawable.bucket_check_24px,Res.drawable.bucket_check_filled_24px) { DemoTaskScreen() },
         NavRoute("Projects", Res.drawable.assignment_24px, Res.drawable.assignment_filled_24px) { DemoScreen("Stats") },
-        NavRoute("More", Res.drawable.more_horiz_24px,Res.drawable.more_horiz_24px) { DemoScreen("Settings") }
+        NavRoute("More", Res.drawable.more_horiz_24px,Res.drawable.more_horiz_24px) { MoreScreen() }
     )
 
     var currentRoute by remember { mutableStateOf(routes[0]) }

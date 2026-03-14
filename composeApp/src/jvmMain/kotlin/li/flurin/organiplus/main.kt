@@ -39,7 +39,6 @@ import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef
 import li.flurin.organiplus.database.DatabaseHolder
 import li.flurin.organiplus.database.SqlDriverFactory
-import li.flurin.organiplus.screen.TextLogo
 import li.flurin.organiplus.ui.theme.AppTheme
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.window.styling.dark
@@ -59,6 +58,7 @@ import com.tulskiy.keymaster.common.Provider
 import io.github.vinceglb.autolaunch.AutoLaunch
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import li.flurin.organiplus.composable.TextLogo
 import java.awt.Window
 
 fun main(args: Array<String>) = application {

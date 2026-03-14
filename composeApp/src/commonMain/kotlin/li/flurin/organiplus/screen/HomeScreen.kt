@@ -1,15 +1,27 @@
 package li.flurin.organiplus.screen
 
+import androidx.compose.foundation.gestures.snapping.SnapPosition
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -18,88 +30,179 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontVariation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
+import li.flurin.organiplus.TaskEntity
+import li.flurin.organiplus.composable.TextLogo
 import li.flurin.organiplus.database.DatabaseHolder
 import li.flurin.organiplus.database.DatabaseManager
 
 import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
 import organiplus.composeapp.generated.resources.Res
+import organiplus.composeapp.generated.resources.home_filled_24px
 import organiplus.composeapp.generated.resources.muesomoderno_italic_variable
+import organiplus.composeapp.generated.resources.pacifico_regular
 import kotlin.collections.emptyList
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen() {
-    TextLogo()
+    val pacificoFontFamily = FontFamily(Font(Res.font.pacifico_regular))
+    val motivationalSentences = listOf(
+        "Small steps, big impact.",
+        "Focus on the next right thing.",
+        "You've got this.",
+        "Time to make magic happen.",
+        "Good morning!\nLet’s be awesome",
+        "Ready to crush the day?",
+        "Hello!\nWhat’s the plan today?",
+        "A fresh start begins now",
+        "Make today absolutely count",
+        "One task at a time",
+        "Dreams don’t work unless you do",
+        "Small steps lead to big wins",
+        "Stop wishing, start doing",
+        "Your future self will thank you",
+        "Coffee first,\nthen adulting",
+        "Conquer the list,\nearn the nap",
+        "Less scrolling,\nmore doing",
+        "Become a productivity wizard",
+        "Do it for the checkmark",
+        "You’ve got this, superstar!",
+        "Shine bright and get busy",
+        "Focus on the good stuff",
+        "Believe you can.\nDo it.",
+        "Today is full of possibilities."
+    )
 
-    // ONLY TO TEST, REMOVE AGAIN AFTERWARDS TODO REMOVE LATER
+    val dailySentence = remember { motivationalSentences.random() }
+
     val queries = DatabaseHolder.db.taskDatabaseQueries
     val tasks by queries.getAllTasks()
         .asFlow()
         .mapToList(Dispatchers.Default)
         .collectAsState(initial = emptyList())
 
-    var text by remember { mutableStateOf("") }
 
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row {
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                modifier = Modifier.weight(1f),
-                label = { Text("New Task") }
-            )
-            Button(
-                modifier = Modifier.padding(start = 8.dp),
-                onClick = {
-                    if (text.isNotBlank()) {
-                        queries.insertTask(title = text, isCompleted = 0L)
-                        text = DatabaseManager.insertNonRecurringTask(text)
-                    }
-                }
-            ) {
-                Text("Add")
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(horizontal = 16.dp),
+            contentPadding = PaddingValues(top = 32.dp, bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            item {
+                Text(
+                    text = dailySentence,
+                    fontFamily = pacificoFontFamily,
+                    style = MaterialTheme.typography.displaySmallEmphasized,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 24.dp).fillMaxWidth(),
+                    lineHeight = 60.sp,
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "Your Tasks",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn {
-            items(tasks) { task ->
-                Text("• ${task.title}", modifier = Modifier.padding(vertical = 4.dp))
+            if (tasks.isEmpty()) {
+                item {
+                    EmptyStateMessage()
+                }
+            } else {
+                items(tasks) { task ->
+                    TaskItemCard(task = task)
+                }
             }
         }
     }
 }
 
 
-@Composable
-fun TextLogo(color: Color = MaterialTheme.colorScheme.onSurface) {
-    val customFontFamily = FontFamily(
-        Font(
-            resource = Res.font.muesomoderno_italic_variable,
-            weight = FontWeight.Bold,
-            variationSettings = FontVariation.Settings(
-                FontVariation.weight(800)
-            )
-        )
-    )
 
-    Text(
-        text = "OrganiPlus",
-        fontFamily = customFontFamily,
-        color = color
-    )
+
+@Composable
+fun TaskItemCard(task: TaskEntity) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.home_filled_24px),
+                contentDescription = "Task Icon",
+                tint = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.size(28.dp)
+            )
+
+            Column {
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+    }
 }
+
+@Composable
+fun EmptyStateMessage() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "All caught up! Time to relax.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+
+
 
 @Preview
 @Composable
