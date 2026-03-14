@@ -28,6 +28,9 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
 import organiplus.composeapp.generated.resources.home_filled_24px
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -97,7 +100,7 @@ fun NewTaskScreen(
 
     val scrollState = rememberScrollState()
     val showTopBarTitle by remember {
-        derivedStateOf { scrollState.value > 150 }
+        derivedStateOf { scrollState.value > 125 }
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -107,6 +110,7 @@ fun NewTaskScreen(
             TopAppBar(
                 title = {
                     AnimatedVisibility(
+                        modifier = Modifier.padding(end = 16.dp).offset(x = 16.dp),
                         visible = showTopBarTitle && title.isNotBlank(),
                         enter = fadeIn() + slideInVertically { it / 2 },
                         exit = fadeOut() + slideOutVertically { it / 2 }
@@ -119,14 +123,19 @@ fun NewTaskScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = onBack,
+                        modifier = Modifier.offset(x = 16.dp),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer
+                        )
+                    ) {
                         Icon(
                             painterResource(Res.drawable.arrow_back_24px),
                             contentDescription = "Go back"
                         )
                     }
-                },
-                scrollBehavior = scrollBehavior
+                }
             )
         },
         floatingActionButtonPosition = FabPosition.Center,
@@ -245,8 +254,7 @@ fun NewTaskScreen(
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(
                         onNext = { descriptionFocusRequester.requestFocus()}
-                    ),
-                    maxLines = 1
+                    )
                 )
 
                 TextField(

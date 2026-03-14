@@ -77,9 +77,8 @@ fun AppTheme(
         dynamicColor = dynamicColor
     )
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content
-    )
+    val typography = getAppTypography()
+
+    MaterialTheme(colorScheme = colorScheme, typography = typography, content = content)
 }
 

@@ -13,7 +13,6 @@ import li.flurin.organiplus.database.SqlDriverFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

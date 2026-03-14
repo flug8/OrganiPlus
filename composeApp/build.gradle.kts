@@ -30,6 +30,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.android.driver)
             implementation(libs.androidx.core.splashscreen)
+            implementation("com.google.android.material:material:1.13.0")
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
