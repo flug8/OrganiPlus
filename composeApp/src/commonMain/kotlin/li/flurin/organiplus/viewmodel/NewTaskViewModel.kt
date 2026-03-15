@@ -16,12 +16,14 @@ import kotlinx.coroutines.withContext
 import li.flurin.organiplus.database.DatabaseManager
 import li.flurin.organiplus.models.EnergyLevel
 import li.flurin.organiplus.models.Priority
+import java.time.LocalDate
 import kotlin.reflect.KClass
 
 
 enum class PopupStep {
     TYPE_SELECTION,
-    DATETIME_SELECTION,
+    DATE_SELECTION,
+    TIME_SELECTION,
     PRIORITY_SELECTION,
     ENERGYLEVEL_SELECTION,
     TAG_SELECTION,
@@ -39,6 +41,7 @@ class NewTaskViewModel : ViewModel() {
     var description by mutableStateOf("")
 
     var taskType by mutableStateOf(TaskCreationType.TASK)
+    var selectedDate: LocalDate by mutableStateOf(LocalDate.now())
     var isSmartSchedule by mutableStateOf(false)
     var isDrop by mutableStateOf(false)
     var priorityState by mutableStateOf(Priority.NONE)
@@ -49,6 +52,8 @@ class NewTaskViewModel : ViewModel() {
 
     var lastStepOrdinal by mutableIntStateOf(0) // to know animation direction
         private set
+
+    var isReadyToSend by mutableStateOf(false)
 
 
     fun selectTaskType(type: TaskCreationType) {
@@ -72,10 +77,11 @@ class NewTaskViewModel : ViewModel() {
                 if (isDrop) {
                     PopupStep.PRIORITY_SELECTION
                 } else {
-                    PopupStep.DATETIME_SELECTION
+                    PopupStep.DATE_SELECTION
                 }
             }
-            PopupStep.DATETIME_SELECTION -> PopupStep.PRIORITY_SELECTION
+            PopupStep.DATE_SELECTION -> PopupStep.TIME_SELECTION
+            PopupStep.TIME_SELECTION -> PopupStep.PRIORITY_SELECTION
             PopupStep.PRIORITY_SELECTION -> PopupStep.ENERGYLEVEL_SELECTION
             PopupStep.ENERGYLEVEL_SELECTION -> PopupStep.TAG_SELECTION
             PopupStep.TAG_SELECTION -> PopupStep.READY_TO_SEND
