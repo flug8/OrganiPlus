@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,6 +49,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -249,11 +251,6 @@ fun AddTaskPopup(
                                     onDateSelected = { newDate -> viewModel.selectedDate = newDate },
                                     onSkipNext = { viewModel.advanceToNextStep() }
                                 )
-                                /*Row {
-                                    Button(onClick = {  }) { Text("Select Date") }
-                                    Spacer(Modifier.width(8.dp))
-                                    OutlinedButton(onClick = { viewModel.advanceToNextStep() }) { Text("Next") }
-                                }*/
                             }
                             PopupStep.TIME_SELECTION -> {
                                 Row {
@@ -344,6 +341,7 @@ fun DayCell(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DateSelectionStep(
     selectedDate: LocalDate,
@@ -351,8 +349,13 @@ fun DateSelectionStep(
     onSkipNext: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+
     val initialPagerState by remember { mutableIntStateOf(500) }
     val pagerState = rememberPagerState(initialPage = initialPagerState) { initialPagerState * 2 }
+
+    val initialMonthPagerState by remember { mutableIntStateOf(500) }
+    val monthPagerState = rememberPagerState(initialPage = initialMonthPagerState) { initialMonthPagerState * 2 }
+
     val scope = rememberCoroutineScope()
     val today = remember { LocalDate.now() }
 
@@ -362,8 +365,11 @@ fun DateSelectionStep(
             today.plusWeeks(weekOffset.toLong())
         }
     }
-    var displayedMonth by remember {
-        mutableStateOf(displayedDate.withDayOfMonth(1))
+    val displayedMonth by remember {
+        derivedStateOf {
+            val monthOffset = monthPagerState.currentPage - initialMonthPagerState
+            today.withDayOfMonth(1).plusMonths(monthOffset.toLong())
+        }
     }
 
     Column(
@@ -385,9 +391,9 @@ fun DateSelectionStep(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.clickable {
                         onDateSelected(today)
-                        displayedMonth = today.withDayOfMonth(1)
                         scope.launch {
                             pagerState.animateScrollToPage(initialPagerState)
+                            monthPagerState.animateScrollToPage(initialMonthPagerState)
                         }
                     }
                 )
@@ -399,7 +405,9 @@ fun DateSelectionStep(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (isExpanded) {
-                    IconButton(onClick = { displayedMonth = displayedMonth.minusMonths(1) }) {
+                    IconButton(onClick = {
+                        scope.launch { monthPagerState.animateScrollToPage(monthPagerState.currentPage - 1) }
+                    }) {
                         Icon(
                             painter = painterResource(Res.drawable.keyboard_arrow_up_24px),
                             "Previous Month",
@@ -422,7 +430,9 @@ fun DateSelectionStep(
                     )
                 }
                 if (isExpanded) {
-                    IconButton(onClick = { displayedMonth = displayedMonth.plusMonths(1) }) {
+                    IconButton(onClick = {
+                        scope.launch { monthPagerState.animateScrollToPage(monthPagerState.currentPage + 1) }
+                    }) {
                         Icon(
                             painter = painterResource(Res.drawable.keyboard_arrow_up_24px),
                             "Next Month",
@@ -434,81 +444,119 @@ fun DateSelectionStep(
         }
 
         if (isExpanded) {
-            val firstDayOfMonth = displayedMonth.withDayOfMonth(1)
-            val firstDayOfWeek = firstDayOfMonth.dayOfWeek.value
-            val daysToPrepend = firstDayOfWeek - 1
-            val startOfGrid = firstDayOfMonth.minusDays(daysToPrepend.toLong())
+            HorizontalPager(state = monthPagerState) { page ->
+                val monthOffset = page - initialMonthPagerState
+                val currentPagerMonth = today.withDayOfMonth(1).plusMonths(monthOffset.toLong())
 
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    val daysOfWeek = DayOfWeek.entries.toTypedArray()
-                    daysOfWeek.forEach { day ->
-                        Box(modifier = Modifier.size(40.dp), contentAlignment = Alignment.Center) {
-                            Text(
-                                text = day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                                fontSize = 12.sp,
-                                color = Color.White.copy(alpha = 0.6f)
-                            )
-                        }
-                    }
-                }
-                for (row in 0 until 6) {
+                val firstDayOfWeek = currentPagerMonth.dayOfWeek.value
+                val daysToPrepend = firstDayOfWeek - 1
+                val startOfGrid = currentPagerMonth.minusDays(daysToPrepend.toLong())
+
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        for (col in 0 until 7) {
-                            val dayIndex = (row * 7) + col
-                            val currentDate = startOfGrid.plusDays(dayIndex.toLong())
+                        val daysOfWeek = DayOfWeek.entries.toTypedArray()
+                        daysOfWeek.forEach { day ->
+                            Box(
+                                modifier = Modifier.size(40.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = day.getDisplayName(
+                                        TextStyle.NARROW,
+                                        Locale.getDefault()
+                                    ),
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.6f)
+                                )
+                            }
+                        }
+                    }
+                    for (row in 0 until 6) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            for (col in 0 until 7) {
+                                val dayIndex = (row * 7) + col
+                                val currentDate = startOfGrid.plusDays(dayIndex.toLong())
 
-                            MonthDayCell(
-                                date = currentDate,
-                                currentMonth = displayedMonth,
-                                isSelected = currentDate.equals(selectedDate),
-                                isToday = currentDate.equals(today),
-                                onClick = {
-                                    onDateSelected(currentDate)
-                                    isExpanded = false
+                                MonthDayCell(
+                                    date = currentDate,
+                                    currentMonth = displayedMonth,
+                                    isSelected = currentDate.equals(selectedDate),
+                                    isToday = currentDate.equals(today),
+                                    onClick = {
+                                        onDateSelected(currentDate)
+                                        isExpanded = false
 
-                                    val daysBetween = ChronoUnit.DAYS.between(
-                                        today.with(DayOfWeek.MONDAY),
-                                        currentDate.with(DayOfWeek.MONDAY)
-                                    )
-                                    val weekOffset = (daysBetween / 7).toInt()
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(initialPagerState + weekOffset)
+                                        val daysBetween = ChronoUnit.DAYS.between(
+                                            today.with(DayOfWeek.MONDAY),
+                                            currentDate.with(DayOfWeek.MONDAY)
+                                        )
+                                        val monthDiff = ChronoUnit.MONTHS.between(
+                                            today.withDayOfMonth(1),
+                                            currentDate.withDayOfMonth(1)
+                                        )
+
+                                        val weekOffset = (daysBetween / 7).toInt()
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(initialPagerState + weekOffset)
+                                            monthPagerState.scrollToPage(initialMonthPagerState + monthDiff.toInt())
+                                        }
                                     }
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
             }
 
         } else {
-            HorizontalPager(state = pagerState) { page ->
-                val weekOffset = page - initialPagerState
-                val startOfWeek = today.plusWeeks(weekOffset.toLong()).with(DayOfWeek.MONDAY)
+            Row (
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalPager(
+                    modifier = Modifier.weight(1f),
+                    state = pagerState,
+                ) { page ->
+                    val weekOffset = page - initialPagerState
+                    val startOfWeek = today.plusWeeks(weekOffset.toLong()).with(DayOfWeek.MONDAY)
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    for (i in 0..6) {
-                        val currentDate = startOfWeek.plusDays(i.toLong())
-                        DayCell(
-                            date = currentDate,
-                            isSelected = currentDate.equals(selectedDate),
-                            isToday = currentDate.equals(today),
-                            onClick = {
-                                onDateSelected(currentDate)
-                                //onSkipNext()
-                            }
-                        )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        for (i in 0..6) {
+                            val currentDate = startOfWeek.plusDays(i.toLong())
+                            DayCell(
+                                date = currentDate,
+                                isSelected = currentDate.equals(selectedDate),
+                                isToday = currentDate.equals(today),
+                                onClick = {
+                                    onDateSelected(currentDate)
+                                    //onSkipNext()
+                                }
+                            )
+                        }
                     }
+                }
+
+                VerticalDivider(modifier = Modifier.height(28.dp))
+
+                Button(
+                    modifier = Modifier.width(40.dp),
+                    onClick = onSkipNext,
+                    shape = ButtonDefaults.squareShape,
+                    contentPadding = PaddingValues(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(Res.drawable.arrow_forward_24px),
+                        contentDescription = "Next Step"
+                    )
                 }
             }
         }
@@ -558,7 +606,9 @@ fun MonthDayCell(
 @Preview
 @Composable
 fun DayCellPreview() {
-
+    AppTheme {
+        DateSelectionStep(LocalDate.now(), {}, {})
+    }
 }
 
 
