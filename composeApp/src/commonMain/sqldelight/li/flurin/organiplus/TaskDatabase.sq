@@ -35,7 +35,7 @@ CREATE TABLE tasks (
     parent_task_id TEXT DEFAULT NULL, -- parent uuid of initial task for recurrence
 
     -- Integrations, More ( TODO: Directly handle them via UUID
-    -- project_id TEXT DEFAULT NULL, -- yet unused, for future categorization
+    project_id TEXT DEFAULT NULL, -- yet unused, for future categorization
     -- tags_id TEXT DEFAULT NULL, -- links to different table for tags (to ensure that tag search is possible)
     -- reminder_profile_id INTEGER DEFAULT NULL, -- links to different table with reminder setup
     -- context_trigger_id INTEGER DEFAULT NULL, -- links to table for smart states like for home assistant or gps.
