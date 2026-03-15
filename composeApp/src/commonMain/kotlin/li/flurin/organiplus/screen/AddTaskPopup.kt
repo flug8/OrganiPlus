@@ -16,6 +16,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,16 +26,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
@@ -42,13 +46,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.OutlinedToggleButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,18 +63,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import li.flurin.organiplus.ui.theme.AppTheme
 import li.flurin.organiplus.viewmodel.NewTaskViewModel
@@ -83,15 +91,17 @@ import organiplus.composeapp.generated.resources.keyboard_arrow_up_24px
 import organiplus.composeapp.generated.resources.send_24px
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.time.temporal.ChronoUnit
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AddTaskPopup(
-    viewModel: NewTaskViewModel,
+    viewModel: NewTaskViewModel = viewModel(factory = NewTaskViewModel.Factory),
     onDismiss: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -103,7 +113,7 @@ fun AddTaskPopup(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            // .imePadding() TODO: ADD IT BACK IT IS ONLY TO TEST WITH THE PREVIEW
+            .imePadding()
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.Bottom
     ) {
@@ -188,47 +198,61 @@ fun AddTaskPopup(
                 ) { step ->
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
+                            .fillMaxWidth(),
                         contentAlignment = Alignment.CenterStart
                     ) {
                         when (step) {
                             PopupStep.TYPE_SELECTION -> {
                                 Row (
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(vertical = 16.dp)
                                 ) {
-                                    SingleChoiceSegmentedButtonRow(
-                                        modifier = Modifier.weight(1f)
+
+                                    Row(
+                                        modifier = Modifier.weight(1f),
+                                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
                                     ) {
-                                        SegmentedButton(
-                                            shape = SegmentedButtonDefaults.itemShape(
-                                                index = 0,
-                                                count = 3
-                                            ),
-                                            onClick = { viewModel.selectTaskType(TaskCreationType.TASK) },
-                                            selected = viewModel.taskType == TaskCreationType.TASK
+                                        OutlinedToggleButton(
+                                            modifier = Modifier.weight(1f),
+                                            checked = viewModel.taskType == TaskCreationType.TASK,
+                                            onCheckedChange = {
+                                                viewModel.selectTaskType(TaskCreationType.TASK)
+                                            },
+                                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
+                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
+                                            )
                                         ) {
                                             Text("Task")
                                         }
-                                        SegmentedButton(
-                                            shape = SegmentedButtonDefaults.itemShape(
-                                                index = 1,
-                                                count = 3
-                                            ),
-                                            onClick = { viewModel.selectTaskType(TaskCreationType.HABIT) },
-                                            selected = viewModel.taskType == TaskCreationType.HABIT
-                                        ) {
-                                            Text("Habit")
-                                        }
-                                        SegmentedButton(
-                                            shape = SegmentedButtonDefaults.itemShape(
-                                                index = 2,
-                                                count = 3
-                                            ),
-                                            onClick = { viewModel.selectTaskType(TaskCreationType.DROP) },
-                                            selected = viewModel.taskType == TaskCreationType.DROP
+                                        OutlinedToggleButton(
+                                            modifier = Modifier.weight(1f),
+                                            checked = viewModel.taskType == TaskCreationType.DROP,
+                                            onCheckedChange = {
+                                                viewModel.selectTaskType(TaskCreationType.DROP)
+                                            },
+                                            shapes = ButtonGroupDefaults.connectedMiddleButtonShapes(),
+                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
+                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
+                                            )
                                         ) {
                                             Text("Drop")
+                                        }
+                                        OutlinedToggleButton(
+                                            modifier = Modifier.weight(1f),
+                                            checked = viewModel.taskType == TaskCreationType.HABIT,
+                                            onCheckedChange = {
+                                                viewModel.selectTaskType(TaskCreationType.HABIT)
+                                            },
+                                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
+                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        ) {
+                                            Text("Habit")
                                         }
                                     }
                                     Button(
@@ -246,17 +270,31 @@ fun AddTaskPopup(
                             }
 
                             PopupStep.DATE_SELECTION -> {
-                                DateSelectionStep(
-                                    selectedDate = viewModel.selectedDate, // Add this state to your ViewModel
-                                    onDateSelected = { newDate -> viewModel.selectedDate = newDate },
-                                    onSkipNext = { viewModel.advanceToNextStep() }
-                                )
+                                Box(modifier = Modifier.padding(vertical = 16.dp)) {
+                                    DateSelectionStep(
+                                        selectedDate = viewModel.selectedDate, // Add this state to your ViewModel
+                                        onDateSelected = { newDate ->
+                                            viewModel.selectedDate = newDate
+                                        },
+                                        onSkipNext = { viewModel.advanceToNextStep() }
+                                    )
+                                }
                             }
                             PopupStep.TIME_SELECTION -> {
-                                Row {
-                                    Button(onClick = {  }) { Text("Select Time") }
-                                    Spacer(Modifier.width(8.dp))
-                                    OutlinedButton(onClick = { viewModel.advanceToNextStep(); viewModel.isReadyToSend = true }) { Text("Next") }
+                                Box(modifier = Modifier.padding(vertical = 8.dp)) {
+                                    TimeSelectionStep(
+                                        initialTime = viewModel.selectedTime ?: LocalTime.now()
+                                            .withMinute(0).plusHours(1),
+                                        onTimeSelected = { newTime ->
+                                            viewModel.selectedTime = newTime
+                                        },
+                                        onNext = {
+                                            viewModel.advanceToNextStep()
+                                        },
+                                        onPrevious = {
+                                            viewModel.goBackAStep()
+                                        }
+                                    )
                                 }
                             }
                             PopupStep.PRIORITY_SELECTION -> {
@@ -266,7 +304,7 @@ fun AddTaskPopup(
                                     OutlinedButton(onClick = { viewModel.advanceToNextStep() }) { Text("Next") }
                                 }
                             }
-                            PopupStep.ENERGYLEVEL_SELECTION -> {
+                            PopupStep.ENERGY_LEVEL_SELECTION -> {
                                 Row {
                                     Button(onClick = {  }) { Text("Select Time") }
                                     Spacer(Modifier.width(8.dp))
@@ -298,48 +336,6 @@ fun AddTaskPopup(
 
 
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun DayCell(
-    date: LocalDate,
-    isSelected: Boolean,
-    isToday: Boolean,
-    onClick: () -> Unit
-) {
-    val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault())
-    val dayOfMonth = date.dayOfMonth.toString()
-
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
-    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
-
-    val borderModifier = if (isToday && !isSelected) {
-        Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-    } else Modifier
-    Column(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .then(borderModifier)
-            .background(backgroundColor)
-            .clickable { onClick() },
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            text = dayOfWeek,
-            fontSize = 10.sp,
-            lineHeight = 10.sp,
-            color = textColor
-        )
-        Text(
-            text = dayOfMonth,
-            fontSize = 14.sp,
-            lineHeight = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = textColor
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -469,7 +465,7 @@ fun DateSelectionStep(
                                         Locale.getDefault()
                                     ),
                                     fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                         }
@@ -563,6 +559,50 @@ fun DateSelectionStep(
     }
 }
 
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun DayCell(
+    date: LocalDate,
+    isSelected: Boolean,
+    isToday: Boolean,
+    onClick: () -> Unit
+) {
+    val dayOfWeek = date.dayOfWeek.getDisplayName(TextStyle.NARROW, Locale.getDefault())
+    val dayOfMonth = date.dayOfMonth.toString()
+
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+
+    val borderModifier = if (isToday && !isSelected) {
+        Modifier.border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+    } else Modifier
+    Column(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .then(borderModifier)
+            .background(backgroundColor)
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = dayOfWeek,
+            fontSize = 10.sp,
+            lineHeight = 10.sp,
+            color = textColor
+        )
+        Text(
+            text = dayOfMonth,
+            fontSize = 14.sp,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+    }
+}
+
 @Composable
 fun MonthDayCell(
     date: LocalDate,
@@ -603,11 +643,246 @@ fun MonthDayCell(
 }
 
 
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun TimeSelectionStep(
+    initialTime: LocalTime = LocalTime.now(),
+    onTimeSelected: (LocalTime) -> Unit,
+    onNext: () -> Unit,
+    onPrevious: () -> Unit
+) {
+    var selectedHour by remember { mutableIntStateOf(initialTime.hour) }
+    var selectedMinute by remember { mutableIntStateOf(initialTime.minute) }
+
+    LaunchedEffect(selectedHour, selectedMinute) {
+        onTimeSelected(LocalTime.of(selectedHour, selectedMinute))
+    }
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+
+        Button(
+            modifier = Modifier.width(40.dp),
+            onClick = onPrevious,
+            shape = ButtonDefaults.squareShape,
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.arrow_forward_24px),
+                contentDescription = "Previous Step",
+                modifier = Modifier.rotate(180f)
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ToggleButton(
+                checked = false,
+                onCheckedChange = {
+                    val currentTime = LocalTime.of(selectedHour, selectedMinute)
+                    val newTime = currentTime.minusMinutes(15)
+                    selectedHour = newTime.hour
+                    selectedMinute = newTime.minute
+                },
+                shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+                colors = ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.keyboard_arrow_up_24px),
+                    contentDescription = "Minus 15 Minutes",
+                    modifier = Modifier.rotate(180f)
+                )
+            }
+            WheelPicker(
+                count = 24,
+                initialIndex = selectedHour,
+                onIndexChanged = { selectedHour = it },
+                modifier = Modifier.width(64.dp)
+            )
+
+            Text(
+                text = ":",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+
+            WheelPicker(
+                count = 60,
+                initialIndex = selectedMinute,
+                onIndexChanged = { selectedMinute = it },
+                modifier = Modifier.width(64.dp)
+            )
+            ToggleButton(
+                checked = false,
+                onCheckedChange = {
+                    val currentTime = LocalTime.of(selectedHour, selectedMinute)
+                    val newTime = currentTime.plusMinutes(15)
+                    selectedHour = newTime.hour
+                    selectedMinute = newTime.minute
+                },
+                shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+                colors = ToggleButtonDefaults.toggleButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.keyboard_arrow_up_24px),
+                    contentDescription = "Plus 15 Minutes"
+                )
+            }
+        }
+        Button(
+            modifier = Modifier.width(40.dp),
+            onClick = onNext,
+            shape = ButtonDefaults.squareShape,
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.arrow_forward_24px),
+                contentDescription = "Next Step"
+            )
+        }
+    }
+}
+
+
+
+@Composable
+fun WheelPicker(
+    count: Int,
+    initialIndex: Int,
+    onIndexChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    formatItem: (Int) -> String = { String.format(Locale.ROOT,"%02d", it) }
+) {
+    val virtualCount = 1_000_000 // probably safer than int.max
+    val middle = virtualCount / 2
+    val initialPage = remember { middle - (middle % count) + initialIndex }
+
+    val pagerState = rememberPagerState(initialPage = initialPage) { virtualCount }
+
+    val isDragged by pagerState.interactionSource.collectIsDraggedAsState()
+    var userScrolled by remember { mutableStateOf(false) }
+
+    LaunchedEffect(isDragged) {
+        if (isDragged) userScrolled = true
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }.collect { page ->
+            if (userScrolled) {
+                onIndexChanged(page % count)
+                userScrolled = false
+            }
+        }
+    }
+
+    LaunchedEffect(initialIndex) {
+        val currentItem = pagerState.currentPage % count
+        if (currentItem != initialIndex) {
+            var diff = initialIndex - currentItem
+            if (diff < -count / 2) diff += count
+            if (diff > count / 2) diff -= count
+
+            pagerState.animateScrollToPage(pagerState.currentPage + diff)
+        }
+    }
+
+    Box(
+        modifier = modifier.height(48.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        VerticalPager(
+            state = pagerState,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(vertical = 12.dp)
+        ) { page ->
+            val actualItem = page % count
+
+            val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffsetFraction
+            val absOffset = pageOffset.absoluteValue
+
+            val scale = 1f - (absOffset * 0.3f).coerceIn(0f, 0.5f)
+            val alpha = 1f - (absOffset * 0.5f).coerceIn(0f, 0.8f)
+
+            Box(
+                modifier = Modifier
+                    .height(24.dp)
+                    .fillMaxWidth()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        this.alpha = alpha
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = formatItem(actualItem),
+                    fontSize = 24.sp,
+                    fontWeight = if (absOffset < 0.5f) FontWeight.Bold else FontWeight.Normal
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to MaterialTheme.colorScheme.surfaceContainer,
+                        0.25f to Color.Transparent,
+                        0.75f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.surfaceContainer
+                    )
+                )
+        )
+    }
+}
+
+@Composable
+fun TempAddTaskScreen() {
+    var showPopup by remember { mutableStateOf(true) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Button(onClick = { showPopup = true }) {
+                Text("Add")
+            }
+        }
+
+        if (showPopup) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+            )
+            AddTaskPopup(
+                onDismiss = { showPopup = false }
+            )
+        }
+    }
+}
+
+
+
 @Preview
 @Composable
 fun DayCellPreview() {
     AppTheme {
-        DateSelectionStep(LocalDate.now(), {}, {})
+        TimeSelectionStep(LocalTime.now(), {}, {}, {})
     }
 }
 

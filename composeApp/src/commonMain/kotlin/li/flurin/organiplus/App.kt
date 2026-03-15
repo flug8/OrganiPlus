@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import li.flurin.organiplus.layout.AppLayout
 import li.flurin.organiplus.screen.NewTaskScreen
+import li.flurin.organiplus.screen.TempAddTaskScreen
 import li.flurin.organiplus.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -85,7 +86,7 @@ fun App() {
                     )
                 }
                 composable<NavNewTask> {
-                    NewTaskScreen(
+                    /*NewTaskScreen(
                         onBack = { navController.popBackStack() },
                         onNavigate = { route ->
                             navController.navigate(route) {
@@ -94,7 +95,8 @@ fun App() {
                                 }
                             }
                         }
-                    )
+                    )*/
+                    TempAddTaskScreen()
                 }
 
                 /*composable<TaskDetails> { backStackEntry ->
