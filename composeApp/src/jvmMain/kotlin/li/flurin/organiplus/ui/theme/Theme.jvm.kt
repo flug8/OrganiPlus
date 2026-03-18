@@ -4,13 +4,9 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 
 @Composable
-actual fun getColorScheme(
-    darkTheme: Boolean,
+actual fun getPlatformColorScheme(
+    isDark: Boolean,
     dynamicColor: Boolean
-): ColorScheme {
-    return if (darkTheme) {
-        darkScheme
-    } else {
-        lightScheme
-    }
+): ColorScheme? {
+    return null
 }

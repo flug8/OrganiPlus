@@ -2,10 +2,16 @@ package li.flurin.organiplus.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import com.materialkolor.DynamicMaterialExpressiveTheme
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamiccolor.ColorSpec
+import com.materialkolor.rememberDynamicMaterialThemeState
 
 val lightScheme = lightColorScheme(
     primary = Primary,
@@ -60,25 +66,47 @@ val darkScheme = darkColorScheme(
 )
 
 @Composable
-expect fun getColorScheme(
-    darkTheme: Boolean,
+expect fun getPlatformColorScheme(
+    isDark: Boolean,
     dynamicColor: Boolean
-): ColorScheme
+): ColorScheme?
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = getColorScheme(
-        darkTheme = darkTheme,
+    val nativeColorScheme = getPlatformColorScheme(
+        isDark = darkTheme,
         dynamicColor = dynamicColor
     )
 
     val typography = getAppTypography()
 
-    MaterialTheme(colorScheme = colorScheme, typography = typography, content = content)
+    if (nativeColorScheme != null) {
+        MaterialTheme(
+            colorScheme = nativeColorScheme,
+            typography = typography,
+            content = content
+        )
+    } else {
+        val dynamicThemeState = rememberDynamicMaterialThemeState(
+            isDark = darkTheme,
+            style = PaletteStyle.Neutral,
+            specVersion = ColorSpec.SpecVersion.SPEC_2025,
+            seedColor = SeedColor,
+        )
+
+        DynamicMaterialExpressiveTheme(
+            state = dynamicThemeState,
+            motionScheme = MotionScheme.expressive(),
+            animate = true,
+            content = content,
+            typography = typography
+        )
+    }
 }
 

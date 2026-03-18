@@ -46,6 +46,7 @@ kotlin {
             implementation(libs.material3.window.size.class1)
             implementation(libs.coroutines.extensions)
             implementation(libs.navigation.compose)
+            implementation(libs.materialKolor)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

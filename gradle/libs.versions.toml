@@ -23,6 +23,7 @@ material3AdaptiveNavigationSuite = "1.9.0"
 navigationCompose = "2.9.2"
 slf4jSimple = "2.0.17"
 sqliteDriver = "2.2.1"
+materialKolor = "5.0.0-alpha07"
 
 [libraries]
 android-driver = { module = "app.cash.sqldelight:android-driver", version.ref = "sqliteDriver" }
@@ -56,6 +57,7 @@ material3-window-size-class1 = { module = "org.jetbrains.compose.material3:mater
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4jSimple" }
 sqlite-driver = { module = "app.cash.sqldelight:sqlite-driver", version.ref = "sqliteDriver" }
+materialKolor = "com.materialkolor:material-kolor:5.0.0-alpha07"
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

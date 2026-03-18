@@ -1,6 +1,8 @@
 package li.flurin.organiplus.ui.theme
 import androidx.compose.ui.graphics.Color
 
+val SeedColor = Color(0xFF4C5CDC)
+
 //["#03045e","#0077b6","#00b4d8","#90e0ef","#caf0f8"]
 
 val Primary = Color(0xFF0077B6)
