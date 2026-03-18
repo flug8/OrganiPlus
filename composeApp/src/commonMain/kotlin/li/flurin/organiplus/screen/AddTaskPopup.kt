@@ -87,8 +87,11 @@ import li.flurin.organiplus.viewmodel.TaskCreationType
 import org.jetbrains.compose.resources.painterResource
 import organiplus.composeapp.generated.resources.Res
 import organiplus.composeapp.generated.resources.arrow_forward_24px
+import organiplus.composeapp.generated.resources.event_available_filled_24px
 import organiplus.composeapp.generated.resources.keyboard_arrow_up_24px
+import organiplus.composeapp.generated.resources.routine_filled_24px
 import organiplus.composeapp.generated.resources.send_24px
+import organiplus.composeapp.generated.resources.water_drop_filled_24px
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -224,7 +227,17 @@ fun AddTaskPopup(
                                                 checkedContentColor = MaterialTheme.colorScheme.onPrimary
                                             )
                                         ) {
-                                            Text("Task")
+                                            Row (
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.event_available_filled_24px),
+                                                    contentDescription = "Task",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Task")
+                                            }
                                         }
                                         OutlinedToggleButton(
                                             modifier = Modifier.weight(1f),
@@ -238,7 +251,17 @@ fun AddTaskPopup(
                                                 checkedContentColor = MaterialTheme.colorScheme.onPrimary
                                             )
                                         ) {
-                                            Text("Drop")
+                                            Row (
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.water_drop_filled_24px),
+                                                    contentDescription = "Drop",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Drop")
+                                            }
                                         }
                                         OutlinedToggleButton(
                                             modifier = Modifier.weight(1f),
@@ -252,7 +275,17 @@ fun AddTaskPopup(
                                                 checkedContentColor = MaterialTheme.colorScheme.onPrimary
                                             )
                                         ) {
-                                            Text("Habit")
+                                            Row (
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
+                                            ) {
+                                                Icon(
+                                                    painter = painterResource(Res.drawable.routine_filled_24px),
+                                                    contentDescription = "Habit",
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Text("Habit")
+                                            }
                                         }
                                     }
                                     Button(

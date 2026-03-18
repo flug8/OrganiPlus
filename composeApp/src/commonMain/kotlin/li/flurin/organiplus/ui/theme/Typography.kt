@@ -49,3 +49,29 @@ fun getAppTypography(): Typography {
         labelSmall = baseline.labelSmall.copy(fontFamily = googleSansRegular)
     )
 }
+
+
+
+@Composable
+fun getGoogleSansFlexFont(
+    weight: Float = 400f,       // wght: 100 to 900
+    roundness: Float = 50f,     // ROND: 0 to 100
+    slant: Float = 0f,          // slnt: -10 to 0
+    grade: Float = 0f,          // GRAD: 0 to 100
+    width: Float = 100f,        // wdth: 25 to 150
+    opticalSize: Float = 14f    // opsz: ...
+): FontFamily {
+    return FontFamily(
+        Font(
+            resource = Res.font.google_sans_flex_variable,
+            variationSettings = FontVariation.Settings(
+                FontVariation.Setting("wght", weight),
+                FontVariation.Setting("ROND", roundness),
+                FontVariation.Setting("slnt", slant),
+                FontVariation.Setting("GRAD", grade),
+                FontVariation.Setting("wdth", width),
+                FontVariation.Setting("opsz", opticalSize)
+            )
+        )
+    )
+}
