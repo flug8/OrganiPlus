@@ -87,10 +87,11 @@ fun HomeScreen() {
     val dailySentence = remember { motivationalSentences.random() }
 
     val queries = DatabaseHolder.db.taskDatabaseQueries
-    val tasks by queries.getAllTasks()
-        .asFlow()
-        .mapToList(Dispatchers.Default)
-        .collectAsState(initial = emptyList())
+    val tasks by remember {
+        queries.getAllTasks()
+            .asFlow()
+            .mapToList(Dispatchers.Default)
+    }.collectAsState(initial = emptyList())
 
 
     Scaffold(
