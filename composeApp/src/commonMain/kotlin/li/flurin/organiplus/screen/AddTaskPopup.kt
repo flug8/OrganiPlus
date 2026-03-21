@@ -16,6 +16,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -734,7 +737,7 @@ fun TimeSelectionStep(
                     modifier = Modifier.rotate(180f)
                 )
             }
-            WheelPicker(
+            WheelPickerLazy(
                 count = 24,
                 initialIndex = selectedHour,
                 onIndexChanged = { selectedHour = it },
@@ -748,11 +751,12 @@ fun TimeSelectionStep(
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
 
-            WheelPicker(
-                count = 60,
-                initialIndex = selectedMinute,
-                onIndexChanged = { selectedMinute = it },
-                modifier = Modifier.width(64.dp)
+            WheelPickerLazy(
+                count = 12,
+                initialIndex = selectedMinute / 5,
+                onIndexChanged = { selectedMinute = it * 5 },
+                modifier = Modifier.width(64.dp),
+                formatItem = { String.format(Locale.ROOT, "%02d", it * 5) }
             )
             ToggleButton(
                 checked = false,
@@ -832,13 +836,13 @@ fun WheelPicker(
     }
 
     Box(
-        modifier = modifier.height(48.dp),
+        modifier = modifier.height(64.dp),
         contentAlignment = Alignment.Center
     ) {
         VerticalPager(
             state = pagerState,
             horizontalAlignment = Alignment.CenterHorizontally,
-            contentPadding = PaddingValues(vertical = 12.dp)
+            contentPadding = PaddingValues(vertical = 18.dp)
         ) { page ->
             val actualItem = page % count
 
@@ -850,7 +854,7 @@ fun WheelPicker(
 
             Box(
                 modifier = Modifier
-                    .height(24.dp)
+                    .height(28.dp)
                     .fillMaxWidth()
                     .graphicsLayer {
                         scaleX = scale
@@ -866,6 +870,126 @@ fun WheelPicker(
                 )
             }
         }
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to MaterialTheme.colorScheme.surfaceContainer,
+                        0.25f to Color.Transparent,
+                        0.75f to Color.Transparent,
+                        1.0f to MaterialTheme.colorScheme.surfaceContainer
+                    )
+                )
+        )
+    }
+}
+
+
+@Composable
+fun WheelPickerLazy(
+    count: Int,
+    initialIndex: Int,
+    onIndexChanged: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    formatItem: (Int) -> String = { String.format(Locale.ROOT, "%02d", it) }
+) {
+    val virtualCount = 1_000_000
+    val middle = virtualCount / 2
+    val initialPage = remember { middle - (middle % count) + initialIndex }
+
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialPage)
+    val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
+
+    LaunchedEffect(initialIndex) {
+        val layoutInfo = listState.layoutInfo
+        val viewportTop = layoutInfo.viewportStartOffset
+        val viewportBottom = layoutInfo.viewportEndOffset
+        val viewportCenter = viewportTop + (viewportBottom - viewportTop) / 2f
+
+        val centerItem = layoutInfo.visibleItemsInfo.minByOrNull {
+            (viewportCenter - (it.offset + it.size / 2f)).absoluteValue
+        }
+
+        val currentVisible = centerItem?.index ?: listState.firstVisibleItemIndex
+        val currentActual = currentVisible % count
+
+        if (currentActual != initialIndex) {
+            var diff = initialIndex - currentActual
+            if (diff < -count / 2) diff += count
+            if (diff > count / 2) diff -= count
+
+            listState.animateScrollToItem(currentVisible + diff)
+        }
+    }
+
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (!listState.isScrollInProgress) {
+            val layoutInfo = listState.layoutInfo
+            val viewportTop = layoutInfo.viewportStartOffset
+            val viewportBottom = layoutInfo.viewportEndOffset
+            val viewportCenter = viewportTop + (viewportBottom - viewportTop) / 2f
+
+            val centerItem = layoutInfo.visibleItemsInfo.minByOrNull {
+                (viewportCenter - (it.offset + it.size / 2f)).absoluteValue
+            }
+
+            centerItem?.let {
+                onIndexChanged(it.index % count)
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier.height(64.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        LazyColumn(
+            state = listState,
+            flingBehavior = flingBehavior,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(vertical = 18.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(virtualCount) { index ->
+                val actualItem = index % count
+
+                Box(
+                    modifier = Modifier
+                        .height(28.dp)
+                        .fillMaxWidth()
+                        .graphicsLayer {
+                            val layoutInfo = listState.layoutInfo
+                            val itemInfo = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
+
+                            if (itemInfo != null) {
+                                val viewportTop = layoutInfo.viewportStartOffset
+                                val viewportBottom = layoutInfo.viewportEndOffset
+                                val viewportCenter = viewportTop + (viewportBottom - viewportTop) / 2f
+
+                                val itemCenter = itemInfo.offset + (itemInfo.size / 2f)
+                                val distance = (viewportCenter - itemCenter).absoluteValue
+
+                                val fraction = (distance / itemInfo.size.toFloat()).coerceIn(0f, 1f)
+
+                                val scale = 1f - (fraction * 0.3f)
+                                val alpha = 1f - (fraction * 0.5f)
+
+                                scaleX = scale
+                                scaleY = scale
+                                this.alpha = alpha
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = formatItem(actualItem),
+                        fontSize = 24.sp,
+                    )
+                }
+            }
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
