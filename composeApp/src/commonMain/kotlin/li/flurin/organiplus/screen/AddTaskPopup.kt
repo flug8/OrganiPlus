@@ -91,9 +91,10 @@ import kotlinx.coroutines.launch
 import li.flurin.organiplus.models.EnergyLevel
 import li.flurin.organiplus.models.Priority
 import li.flurin.organiplus.ui.theme.AppTheme
-import li.flurin.organiplus.viewmodel.NewTaskViewModel
+import li.flurin.organiplus.viewmodel.AddTaskPopupViewModel
 import li.flurin.organiplus.viewmodel.PopupStep
 import li.flurin.organiplus.viewmodel.TaskCreationType
+import li.flurin.organiplus.viewmodel.TaskDraft
 import org.jetbrains.compose.resources.painterResource
 import organiplus.composeapp.generated.resources.Res
 import organiplus.composeapp.generated.resources.arrow_forward_24px
@@ -117,8 +118,10 @@ import kotlin.math.absoluteValue
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AddTaskPopup(
-    viewModel: NewTaskViewModel = viewModel(factory = NewTaskViewModel.Factory),
-    onDismiss: () -> Unit
+    viewModel: AddTaskPopupViewModel = viewModel { AddTaskPopupViewModel() },
+    onDismiss: () -> Unit,
+    onDirectSave: (TaskDraft) -> Unit,
+    onExpandToFullEdit: (TaskDraft) -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }
 
@@ -170,7 +173,7 @@ fun AddTaskPopup(
                     ) {
                         Button(
                             modifier = Modifier.width(40.dp),
-                            onClick = { viewModel.advanceToNextStep() },
+                            onClick = { /* TODO: Save and show NewTaskScreen */ },
                             shape = ButtonDefaults.squareShape,
                             contentPadding = PaddingValues(8.dp)
                         ) {
@@ -228,6 +231,7 @@ fun AddTaskPopup(
                                     selectedItem = viewModel.taskType,
                                     onItemSelected = { viewModel.selectTaskType(it) },
                                     onNextClicked = { viewModel.advanceToNextStep() },
+                                    title = "Category",
                                     modifier = Modifier.padding(vertical = 16.dp)
                                 ) { item, isSelected ->
                                     val (text, iconRes) = when (item) {
@@ -305,6 +309,7 @@ fun AddTaskPopup(
                                             Priority.URGENT -> Color(0xFFD72638).harmonize(MaterialTheme.colorScheme.primary)
                                         }
                                     },
+                                    title = "Priority",
                                     modifier = Modifier.padding(vertical = 16.dp)
                                 ) { item, isSelected ->
                                     val iconRes = if (item == Priority.NONE) Res.drawable.flag_24px else Res.drawable.flag_filled_24px
@@ -338,6 +343,7 @@ fun AddTaskPopup(
                                             EnergyLevel.HIGH -> Color(0xFFD72638)
                                         }.harmonize(MaterialTheme.colorScheme.primary)
                                     },
+                                    title = "Difficulty",
                                     modifier = Modifier.padding(vertical = 16.dp)
                                 ) { item, isSelected ->
                                     Icon(
@@ -360,9 +366,21 @@ fun AddTaskPopup(
                             }
                             PopupStep.READY_TO_SEND -> {
                                 Row {
-                                    Button(onClick = {  }) { Text("Select Time") }
+                                    OutlinedButton(onClick = {
+                                        val draft = viewModel.createDraft()
+                                        onDirectSave(draft)
+                                    }) {
+                                        Text("Save & Close")
+                                    }
+
                                     Spacer(Modifier.width(8.dp))
-                                    OutlinedButton(onClick = { viewModel.advanceToNextStep() }) { Text("Next") }
+
+                                    Button(onClick = {
+                                        val draft = viewModel.createDraft()
+                                        onExpandToFullEdit(draft)
+                                    }) {
+                                        Text("View")
+                                    }
                                 }
                             }
 
@@ -383,56 +401,62 @@ fun <T> SegmentedSelectionWithNextButton(
     selectedItem: T,
     onItemSelected: (T) -> Unit,
     onNextClicked: () -> Unit,
+    title: String,
     modifier: Modifier = Modifier,
     selectedColorProvider: @Composable (T) -> Color = { MaterialTheme.colorScheme.primary },
     nextButtonIcon: Painter = painterResource(Res.drawable.arrow_forward_24px),
     itemContent: @Composable RowScope.(item: T, isSelected: Boolean) -> Unit
 ) {
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
+        Text(title)
         Row(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items.forEachIndexed { index, item ->
-                val shape = when {
-                    items.size == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                    index == items.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                }
+            Row(
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+            ) {
+                items.forEachIndexed { index, item ->
+                    val shape = when {
+                        items.size == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                        index == items.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                        else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                    }
 
-                val isSelected = selectedItem == item
+                    val isSelected = selectedItem == item
 
-                val containerColor = selectedColorProvider(item)
+                    val containerColor = selectedColorProvider(item)
 
-                OutlinedToggleButton(
-                    modifier = Modifier.weight(1f),
-                    checked = isSelected,
-                    onCheckedChange = { onItemSelected(item) },
-                    shapes = shape,
-                    colors = ToggleButtonDefaults.outlinedToggleButtonColors(
-                        checkedContainerColor = containerColor,
-                        checkedContentColor = contentColorFor(containerColor)
-                    )
-                ) {
-                    itemContent(item, isSelected)
+                    OutlinedToggleButton(
+                        modifier = Modifier.weight(1f),
+                        checked = isSelected,
+                        onCheckedChange = { onItemSelected(item) },
+                        shapes = shape,
+                        colors = ToggleButtonDefaults.outlinedToggleButtonColors(
+                            checkedContainerColor = containerColor,
+                            checkedContentColor = contentColorFor(containerColor)
+                        )
+                    ) {
+                        itemContent(item, isSelected)
+                    }
                 }
             }
-        }
 
-        Button(
-            modifier = Modifier.width(40.dp),
-            onClick = onNextClicked,
-            shape = ButtonDefaults.squareShape,
-            contentPadding = PaddingValues(8.dp)
-        ) {
-            Icon(
-                painter = nextButtonIcon,
-                contentDescription = "Next Step"
-            )
+            Button(
+                modifier = Modifier.width(40.dp),
+                onClick = onNextClicked,
+                shape = ButtonDefaults.squareShape,
+                contentPadding = PaddingValues(8.dp)
+            ) {
+                Icon(
+                    painter = nextButtonIcon,
+                    contentDescription = "Next Step"
+                )
+            }
         }
     }
 }
@@ -1072,34 +1096,6 @@ fun WheelPickerLazy(
     }
 }
 
-@Composable
-fun TempAddTaskScreen() {
-    var showPopup by remember { mutableStateOf(true) }
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Button(onClick = { showPopup = true }) {
-                Text("Add")
-            }
-        }
-
-        if (showPopup) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-            )
-            AddTaskPopup(
-                onDismiss = { showPopup = false }
-            )
-        }
-    }
-}
-
 
 
 @Preview
@@ -1116,7 +1112,7 @@ fun DayCellPreview() {
 fun AddTaskPopupPreview() {
     AppTheme {
         var showPopup by remember { mutableStateOf(true) }
-        val mockViewModel = remember { NewTaskViewModel() }
+        val mockViewModel = remember { AddTaskPopupViewModel() }
 
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
@@ -1137,7 +1133,7 @@ fun AddTaskPopupPreview() {
                 )
                 AddTaskPopup(
                     viewModel = mockViewModel,
-                    onDismiss = { showPopup = false }
+                    onDismiss = { showPopup = false }, {},{}
                 )
             }
         }

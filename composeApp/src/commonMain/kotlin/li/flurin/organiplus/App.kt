@@ -9,7 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
@@ -18,7 +18,6 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import li.flurin.organiplus.layout.AppLayout
 import li.flurin.organiplus.screen.NewTaskScreen
-import li.flurin.organiplus.screen.TempAddTaskScreen
 import li.flurin.organiplus.ui.theme.AppTheme
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -86,17 +85,9 @@ fun App() {
                     )
                 }
                 composable<NavNewTask> {
-                    /*NewTaskScreen(
-                        onBack = { navController.popBackStack() },
-                        onNavigate = { route ->
-                            navController.navigate(route) {
-                                if (route is NavNewTask) {
-                                    popUpTo<NavNewTask> { inclusive = true}
-                                }
-                            }
-                        }
-                    )*/
-                    TempAddTaskScreen()
+                    NewTaskScreen(
+                        onNavigateBack = { navController.popBackStack() }
+                    )
                 }
 
                 /*composable<TaskDetails> { backStackEntry ->

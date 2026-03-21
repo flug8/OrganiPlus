@@ -13,6 +13,8 @@ class JVMPlatform: Platform {
             else -> OSType.UNKNOWN
         }
     }
+    override val isMobile: Boolean = false
+    override val isDesktop: Boolean = true
 }
 
 actual fun getPlatform(): Platform = JVMPlatform()

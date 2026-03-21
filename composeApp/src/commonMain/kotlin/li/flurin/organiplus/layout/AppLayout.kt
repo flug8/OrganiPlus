@@ -108,7 +108,7 @@ fun AppLayout(onNavigate: (Any) -> Unit) {
                             }
                             Spacer(Modifier.height(8.dp))
                             FloatingActionButton(
-                                onClick = { /* TODO: Add Create Action */ },
+                                onClick = { onNavigate(NavNewTask) },
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 elevation = FloatingActionButtonDefaults.elevation(0.dp)
                             ) {

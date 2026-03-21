@@ -5,9 +5,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -18,7 +16,6 @@ import li.flurin.organiplus.models.EnergyLevel
 import li.flurin.organiplus.models.Priority
 import java.time.LocalDate
 import java.time.LocalTime
-import kotlin.reflect.KClass
 
 
 enum class PopupStep {
@@ -38,7 +35,7 @@ enum class TaskCreationType {
     DROP
 }
 
-class NewTaskViewModel : ViewModel() {
+class AddTaskPopupViewModel : ViewModel() {
     var title by mutableStateOf("")
     var description by mutableStateOf("")
 
@@ -93,7 +90,10 @@ class NewTaskViewModel : ViewModel() {
                 }
             }
             PopupStep.DATE_SELECTION -> PopupStep.TIME_SELECTION
-            PopupStep.TIME_SELECTION -> PopupStep.REMINDER_SELECTION
+            PopupStep.TIME_SELECTION -> {
+                isReadyToSend = true
+                PopupStep.REMINDER_SELECTION
+            }
             PopupStep.REMINDER_SELECTION -> PopupStep.PRIORITY_SELECTION
             PopupStep.PRIORITY_SELECTION -> PopupStep.ENERGY_LEVEL_SELECTION
             PopupStep.ENERGY_LEVEL_SELECTION -> PopupStep.TAG_SELECTION
@@ -136,6 +136,7 @@ class NewTaskViewModel : ViewModel() {
         }
     }
 
+    // TODO: Legacy from NewTaskScreenLegacy, remove when NewTaskScreenLegacy is removed
     private fun executeSave(onSuccess: suspend () -> Unit) {
         if (title.isBlank()) return
 
@@ -148,11 +149,15 @@ class NewTaskViewModel : ViewModel() {
         }
     }
 
-    companion object {
-        val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: KClass<T>, extras: CreationExtras): T {
-                return NewTaskViewModel() as T
-            }
-        }
+
+    fun createDraft(): TaskDraft {
+        return TaskDraft(
+            title = this.title,
+            type = this.taskType,
+            date = this.selectedDate,
+            time = this.selectedTime,
+            priority = this.priorityState,
+            energyLevel = this.energyState
+        )
     }
 }
