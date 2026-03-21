@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -47,6 +48,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedToggleButton
@@ -57,6 +59,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -76,13 +79,17 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.materialkolor.ktx.harmonize
 import kotlinx.coroutines.launch
+import li.flurin.organiplus.models.EnergyLevel
+import li.flurin.organiplus.models.Priority
 import li.flurin.organiplus.ui.theme.AppTheme
 import li.flurin.organiplus.viewmodel.NewTaskViewModel
 import li.flurin.organiplus.viewmodel.PopupStep
@@ -90,7 +97,10 @@ import li.flurin.organiplus.viewmodel.TaskCreationType
 import org.jetbrains.compose.resources.painterResource
 import organiplus.composeapp.generated.resources.Res
 import organiplus.composeapp.generated.resources.arrow_forward_24px
+import organiplus.composeapp.generated.resources.bolt_filled_24px
 import organiplus.composeapp.generated.resources.event_available_filled_24px
+import organiplus.composeapp.generated.resources.flag_24px
+import organiplus.composeapp.generated.resources.flag_filled_24px
 import organiplus.composeapp.generated.resources.keyboard_arrow_up_24px
 import organiplus.composeapp.generated.resources.routine_filled_24px
 import organiplus.composeapp.generated.resources.send_24px
@@ -209,98 +219,32 @@ fun AddTaskPopup(
                     ) {
                         when (step) {
                             PopupStep.TYPE_SELECTION -> {
-                                Row (
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                SegmentedSelectionWithNextButton(
+                                    items = listOf(
+                                        TaskCreationType.TASK,
+                                        TaskCreationType.DROP,
+                                        TaskCreationType.HABIT
+                                    ),
+                                    selectedItem = viewModel.taskType,
+                                    onItemSelected = { viewModel.selectTaskType(it) },
+                                    onNextClicked = { viewModel.advanceToNextStep() },
                                     modifier = Modifier.padding(vertical = 16.dp)
-                                ) {
-
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
-                                    ) {
-                                        OutlinedToggleButton(
-                                            modifier = Modifier.weight(1f),
-                                            checked = viewModel.taskType == TaskCreationType.TASK,
-                                            onCheckedChange = {
-                                                viewModel.selectTaskType(TaskCreationType.TASK)
-                                            },
-                                            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
-                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
-                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        ) {
-                                            Row (
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.event_available_filled_24px),
-                                                    contentDescription = "Task",
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Text("Task")
-                                            }
-                                        }
-                                        OutlinedToggleButton(
-                                            modifier = Modifier.weight(1f),
-                                            checked = viewModel.taskType == TaskCreationType.DROP,
-                                            onCheckedChange = {
-                                                viewModel.selectTaskType(TaskCreationType.DROP)
-                                            },
-                                            shapes = ButtonGroupDefaults.connectedMiddleButtonShapes(),
-                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
-                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        ) {
-                                            Row (
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.water_drop_filled_24px),
-                                                    contentDescription = "Drop",
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Text("Drop")
-                                            }
-                                        }
-                                        OutlinedToggleButton(
-                                            modifier = Modifier.weight(1f),
-                                            checked = viewModel.taskType == TaskCreationType.HABIT,
-                                            onCheckedChange = {
-                                                viewModel.selectTaskType(TaskCreationType.HABIT)
-                                            },
-                                            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
-                                            colors = ToggleButtonDefaults.outlinedToggleButtonColors(
-                                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                                checkedContentColor = MaterialTheme.colorScheme.onPrimary
-                                            )
-                                        ) {
-                                            Row (
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
-                                            ) {
-                                                Icon(
-                                                    painter = painterResource(Res.drawable.routine_filled_24px),
-                                                    contentDescription = "Habit",
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                                Text("Habit")
-                                            }
-                                        }
+                                ) { item, isSelected ->
+                                    val (text, iconRes) = when (item) {
+                                        TaskCreationType.TASK -> "Task" to Res.drawable.event_available_filled_24px
+                                        TaskCreationType.DROP -> "Drop" to Res.drawable.water_drop_filled_24px
+                                        TaskCreationType.HABIT -> "Habit" to Res.drawable.routine_filled_24px
                                     }
-                                    Button(
-                                        modifier = Modifier.width(40.dp),
-                                        onClick = { viewModel.advanceToNextStep() },
-                                        shape = ButtonDefaults.squareShape,
-                                        contentPadding = PaddingValues(8.dp)
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally)
                                     ) {
                                         Icon(
-                                            painter = painterResource(Res.drawable.arrow_forward_24px),
-                                            contentDescription = "Next Step"
+                                            painter = painterResource(iconRes),
+                                            contentDescription = text,
+                                            modifier = Modifier.size(20.dp)
                                         )
+                                        Text(text)
                                     }
                                 }
                             }
@@ -308,7 +252,7 @@ fun AddTaskPopup(
                             PopupStep.DATE_SELECTION -> {
                                 Box(modifier = Modifier.padding(vertical = 16.dp)) {
                                     DateSelectionStep(
-                                        selectedDate = viewModel.selectedDate, // Add this state to your ViewModel
+                                        selectedDate = viewModel.selectedDate,
                                         onDateSelected = { newDate ->
                                             viewModel.selectedDate = newDate
                                         },
@@ -333,18 +277,78 @@ fun AddTaskPopup(
                                     )
                                 }
                             }
-                            PopupStep.PRIORITY_SELECTION -> {
+                            PopupStep.REMINDER_SELECTION -> {
                                 Row {
                                     Button(onClick = {  }) { Text("Select Time") }
                                     Spacer(Modifier.width(8.dp))
                                     OutlinedButton(onClick = { viewModel.advanceToNextStep() }) { Text("Next") }
                                 }
                             }
+                            PopupStep.PRIORITY_SELECTION -> {
+                                SegmentedSelectionWithNextButton(
+                                    items = listOf(
+                                        Priority.NONE,
+                                        Priority.LOW,
+                                        Priority.NORMAL,
+                                        Priority.HIGH,
+                                        Priority.URGENT
+                                    ),
+                                    selectedItem = viewModel.priorityState,
+                                    onItemSelected = { viewModel.selectPriority(it) },
+                                    onNextClicked = { viewModel.advanceToNextStep() },
+                                    selectedColorProvider = { item ->
+                                        when (item) {
+                                            Priority.NONE -> MaterialTheme.colorScheme.primary
+                                            Priority.LOW -> Color(0xFF429E46).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.NORMAL -> Color(0xFF3F88C5).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.HIGH -> Color(0xFFF4900C).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.URGENT -> Color(0xFFD72638).harmonize(MaterialTheme.colorScheme.primary)
+                                        }
+                                    },
+                                    modifier = Modifier.padding(vertical = 16.dp)
+                                ) { item, isSelected ->
+                                    val iconRes = if (item == Priority.NONE) Res.drawable.flag_24px else Res.drawable.flag_filled_24px
+                                    Icon(
+                                        painter = painterResource(iconRes),
+                                        contentDescription = "Priority",
+                                        tint = if (isSelected) LocalContentColor.current else when (item) {
+                                            Priority.NONE -> LocalContentColor.current
+                                            Priority.LOW -> Color(0xFF429E46).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.NORMAL -> Color(0xFF3F88C5).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.HIGH -> Color(0xFFF4900C).harmonize(MaterialTheme.colorScheme.primary)
+                                            Priority.URGENT -> Color(0xFFD72638).harmonize(MaterialTheme.colorScheme.primary)
+                                        }
+                                    )
+                                }
+                            }
                             PopupStep.ENERGY_LEVEL_SELECTION -> {
-                                Row {
-                                    Button(onClick = {  }) { Text("Select Time") }
-                                    Spacer(Modifier.width(8.dp))
-                                    OutlinedButton(onClick = { viewModel.advanceToNextStep() }) { Text("Next") }
+                                SegmentedSelectionWithNextButton(
+                                    items = listOf(
+                                        EnergyLevel.LOW,
+                                        EnergyLevel.MEDIUM,
+                                        EnergyLevel.HIGH
+                                    ),
+                                    selectedItem = viewModel.energyState,
+                                    onItemSelected = { viewModel.selectEnergyLevel(it) },
+                                    onNextClicked = { viewModel.advanceToNextStep() },
+                                    selectedColorProvider = { item ->
+                                        when (item) {
+                                            EnergyLevel.LOW -> Color(0xFF429E46)
+                                            EnergyLevel.MEDIUM -> Color(0xFFF4900C)
+                                            EnergyLevel.HIGH -> Color(0xFFD72638)
+                                        }.harmonize(MaterialTheme.colorScheme.primary)
+                                    },
+                                    modifier = Modifier.padding(vertical = 16.dp)
+                                ) { item, isSelected ->
+                                    Icon(
+                                        painter = painterResource(Res.drawable.bolt_filled_24px),
+                                        contentDescription = "Energy Level",
+                                        tint = if (isSelected) LocalContentColor.current else when (item) {
+                                            EnergyLevel.LOW -> Color(0xFF429E46)
+                                            EnergyLevel.MEDIUM -> Color(0xFFF4900C)
+                                            EnergyLevel.HIGH -> Color(0xFFD72638)
+                                        }.harmonize(MaterialTheme.colorScheme.primary)
+                                    )
                                 }
                             }
                             PopupStep.TAG_SELECTION -> {
@@ -366,6 +370,69 @@ fun AddTaskPopup(
                     }
                 }
             }
+        }
+    }
+}
+
+
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun <T> SegmentedSelectionWithNextButton(
+    items: List<T>,
+    selectedItem: T,
+    onItemSelected: (T) -> Unit,
+    onNextClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+    selectedColorProvider: @Composable (T) -> Color = { MaterialTheme.colorScheme.primary },
+    nextButtonIcon: Painter = painterResource(Res.drawable.arrow_forward_24px),
+    itemContent: @Composable RowScope.(item: T, isSelected: Boolean) -> Unit
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)
+        ) {
+            items.forEachIndexed { index, item ->
+                val shape = when {
+                    items.size == 1 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    index == 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    index == items.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                }
+
+                val isSelected = selectedItem == item
+
+                val containerColor = selectedColorProvider(item)
+
+                OutlinedToggleButton(
+                    modifier = Modifier.weight(1f),
+                    checked = isSelected,
+                    onCheckedChange = { onItemSelected(item) },
+                    shapes = shape,
+                    colors = ToggleButtonDefaults.outlinedToggleButtonColors(
+                        checkedContainerColor = containerColor,
+                        checkedContentColor = contentColorFor(containerColor)
+                    )
+                ) {
+                    itemContent(item, isSelected)
+                }
+            }
+        }
+
+        Button(
+            modifier = Modifier.width(40.dp),
+            onClick = onNextClicked,
+            shape = ButtonDefaults.squareShape,
+            contentPadding = PaddingValues(8.dp)
+        ) {
+            Icon(
+                painter = nextButtonIcon,
+                contentDescription = "Next Step"
+            )
         }
     }
 }

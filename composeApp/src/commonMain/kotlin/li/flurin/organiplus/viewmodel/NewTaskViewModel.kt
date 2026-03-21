@@ -25,6 +25,7 @@ enum class PopupStep {
     TYPE_SELECTION,
     DATE_SELECTION,
     TIME_SELECTION,
+    REMINDER_SELECTION,
     PRIORITY_SELECTION,
     ENERGY_LEVEL_SELECTION,
     TAG_SELECTION,
@@ -47,7 +48,7 @@ class NewTaskViewModel : ViewModel() {
     var isSmartSchedule by mutableStateOf(false)
     var isDrop by mutableStateOf(false)
     var priorityState by mutableStateOf(Priority.NONE)
-    var energyState by mutableStateOf(EnergyLevel.LOW)
+    var energyState by mutableStateOf(EnergyLevel.MEDIUM)
 
     var currentStep by mutableStateOf(PopupStep.TYPE_SELECTION)
         private set
@@ -63,6 +64,15 @@ class NewTaskViewModel : ViewModel() {
         this.isDrop = (type == TaskCreationType.DROP)
         advanceToNextStep()
     }
+
+    fun selectPriority(priority: Priority) {
+        this.priorityState = priority
+    }
+
+    fun selectEnergyLevel(energyLevel: EnergyLevel) {
+        this.energyState = energyLevel
+    }
+
 
     fun advanceToNextStep() {
         lastStepOrdinal = currentStep.ordinal
@@ -83,7 +93,8 @@ class NewTaskViewModel : ViewModel() {
                 }
             }
             PopupStep.DATE_SELECTION -> PopupStep.TIME_SELECTION
-            PopupStep.TIME_SELECTION -> PopupStep.PRIORITY_SELECTION
+            PopupStep.TIME_SELECTION -> PopupStep.REMINDER_SELECTION
+            PopupStep.REMINDER_SELECTION -> PopupStep.PRIORITY_SELECTION
             PopupStep.PRIORITY_SELECTION -> PopupStep.ENERGY_LEVEL_SELECTION
             PopupStep.ENERGY_LEVEL_SELECTION -> PopupStep.TAG_SELECTION
             PopupStep.TAG_SELECTION -> PopupStep.READY_TO_SEND
