@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OrganiPlus</string>
+    <string name="shortcut_quick_task_short">Quick Task</string>
+    <string name="shortcut_quick_task_long">Add a new task quickly</string>
 </resources>

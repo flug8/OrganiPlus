@@ -3,9 +3,9 @@ package li.flurin.organiplus.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import li.flurin.organiplus.TaskDraftRepository
 import li.flurin.organiplus.getPlatform
 import li.flurin.organiplus.models.EnergyLevel
 import li.flurin.organiplus.models.Priority
@@ -14,6 +14,7 @@ import java.time.LocalTime
 
 data class TaskDraft(
     val title: String = "",
+    val description: String? = null,
     val type: TaskCreationType = TaskCreationType.TASK,
     val date: LocalDate? = null,
     val time: LocalTime? = null,
@@ -21,33 +22,31 @@ data class TaskDraft(
     val energyLevel: EnergyLevel = EnergyLevel.MEDIUM
 )
 
-class NewTaskScreenViewModel : ViewModel() {
+class NewTaskScreenViewModel(repository: TaskDraftRepository) : ViewModel() {
 
-    private val _draft = MutableStateFlow(TaskDraft())
-    val draft: StateFlow<TaskDraft> = _draft.asStateFlow()
+    private val _draft = MutableStateFlow(repository.pendingDraft ?: TaskDraft())
+    val draft = _draft.asStateFlow()
 
-    private val _showPopup = MutableStateFlow(true)
-    val showPopup: StateFlow<Boolean> = _showPopup.asStateFlow()
-
-    fun initScreen(initialDraft: TaskDraft?) {
-        if (initialDraft != null) {
-            _draft.value = initialDraft
-            _showPopup.value = false
-        } else if (getPlatform().isMobile) {
-            _showPopup.value = true
-        } else {
-            _draft.value = TaskDraft()
-            _showPopup.value = false
-        }
-    }
+    private val _showPopup = MutableStateFlow(
+        repository.pendingDraft == null && getPlatform().isMobile
+    )
+    val showPopup = _showPopup.asStateFlow()
 
     fun updateDraft(newDraft: TaskDraft) {
         _draft.value = newDraft
     }
 
+    init {
+        repository.pendingDraft = null
+    }
+
     fun onExpandFromPopup(draftFromPopup: TaskDraft) {
         _draft.value = draftFromPopup
         _showPopup.value = false
+    }
+
+    fun onShowPopupChanged(isVisible: Boolean) {
+        _showPopup.value = isVisible
     }
 
     fun saveTask(onComplete: () -> Unit) {

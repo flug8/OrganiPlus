@@ -10,15 +10,20 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
 import li.flurin.organiplus.layout.AppLayout
 import li.flurin.organiplus.screen.NewTaskScreen
 import li.flurin.organiplus.ui.theme.AppTheme
+import li.flurin.organiplus.viewmodel.TaskDraft
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -30,11 +35,29 @@ expect fun kmpLog(tag: String, message: String, isError: Boolean = false)
 @Serializable object NavSettings
 @Serializable data class TaskDetails @OptIn(ExperimentalUuidApi::class) constructor(val uuid: Uuid)
 
+object Graph {
+    val taskDraftRepository = TaskDraftRepository()
+}
+
+class TaskDraftRepository {
+    var pendingDraft: TaskDraft? = null
+}
+
 @Composable
 @Preview
-fun App() {
+fun App(
+    navigationSignal: MutableStateFlow<String?> = MutableStateFlow(null)
+) {
     AppTheme {
         val navController = rememberNavController()
+        val signal by navigationSignal.collectAsState()
+
+        LaunchedEffect(signal) {
+            if (signal == "NAV_NEW_TASK") {
+                navController.navigate(NavNewTask)
+                navigationSignal.value = null
+            }
+        }
 
         Surface(
             modifier = Modifier.fillMaxSize(),
