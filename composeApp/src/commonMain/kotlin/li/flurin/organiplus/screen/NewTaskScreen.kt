@@ -39,13 +39,26 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
+import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -145,6 +158,16 @@ fun NewTaskScreenContent(
     onDraftChange: (TaskDraft) -> Unit,
     modifier: Modifier = Modifier
 ) {
+
+    val (
+        titleFocus,
+        scheduleFocus,
+    ) = remember { FocusRequester.createRefs() }
+
+    LaunchedEffect(Unit) {
+        titleFocus.requestFocus()
+    }
+
     val isCompact = !currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
 
     if (isCompact) {
@@ -160,8 +183,8 @@ fun NewTaskScreenContent(
 
             // Only show task content for now as requested
             if (draft.type == TaskCreationType.TASK) {
-                CreativeCanvasModule(draft, onDraftChange)
-                ScheduleAndRemindersModule(draft, onDraftChange)
+                CreativeCanvasModule(draft, onDraftChange, titleFocus, scheduleFocus)
+                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
 
                 // 2x1 Grid for Priority and Energy
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -191,7 +214,9 @@ fun NewTaskScreenContent(
                     CreativeCanvasModule(
                         draft = draft,
                         onDraftChange = onDraftChange,
-                        modifier = Modifier.weight(1f) // Expands to fill available vertical space
+                        modifier = Modifier.weight(1f),
+                        titleFocus = titleFocus,
+                        nextFocus = scheduleFocus
                     )
                 }
             }
@@ -204,7 +229,7 @@ fun NewTaskScreenContent(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    ScheduleAndRemindersModule(draft, onDraftChange)
+                    ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
 
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         PriorityModule(draft, onDraftChange, Modifier.weight(1f))
@@ -281,7 +306,15 @@ fun TypeSelectorModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit) {
 }
 
 @Composable
-fun CreativeCanvasModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit, modifier: Modifier = Modifier) {
+fun CreativeCanvasModule(
+    draft: TaskDraft,
+    onDraftChange: (TaskDraft) -> Unit,
+    titleFocus: FocusRequester,
+    nextFocus: FocusRequester,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+
     ExpressiveModule(modifier = modifier) {
         TextField(
             value = draft.title,
@@ -294,7 +327,17 @@ fun CreativeCanvasModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit, m
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(titleFocus)
+                .onPreviewKeyEvent { event ->
+                    if (event.key == Key.Tab && event.type == KeyEventType.KeyDown && !event.isShiftPressed) {
+                        focusManager.moveFocus(FocusDirection.Next)
+                        true
+                    } else {
+                        false
+                    }
+                },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
         )
 
@@ -314,24 +357,43 @@ fun CreativeCanvasModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit, m
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier.fillMaxWidth().weight(1f, fill = false) // Allows it to expand on desktop
+            modifier = Modifier
+                .fillMaxWidth()
+                .onPreviewKeyEvent { event ->
+                    if (event.key == Key.Tab && event.type == KeyEventType.KeyDown && !event.isShiftPressed) {
+                        nextFocus.requestFocus()
+                        true
+                    } else {
+                        false
+                    }
+                },
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleAndRemindersModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit) {
+fun ScheduleAndRemindersModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit, scheduleFocus: FocusRequester) {
     ExpressiveModule {
         // --- Schedule Section ---
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.weight(1f).clickable { /* TODO: Open Date Picker */ }) {
-                Text("Schedule", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(scheduleFocus)
+                    .clickable { /* TODO: Open Date Picker */ }) {
+                Text(
+                    "Schedule",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = draft.date?.toString() ?: "Today", // TODO: Format nicely (e.g. "Tomorrow, Oct 24")
+                    text = draft.date?.toString()
+                        ?: "Today", // TODO: Format nicely (e.g. "Tomorrow, Oct 24")
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.SemiBold
                 )

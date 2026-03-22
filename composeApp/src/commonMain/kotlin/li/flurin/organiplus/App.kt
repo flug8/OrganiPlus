@@ -20,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
+import li.flurin.organiplus.composable.AppTooltipProvider
 import li.flurin.organiplus.layout.AppLayout
 import li.flurin.organiplus.screen.NewTaskScreen
 import li.flurin.organiplus.ui.theme.AppTheme
@@ -49,74 +50,82 @@ fun App(
     navigationSignal: MutableStateFlow<String?> = MutableStateFlow(null)
 ) {
     AppTheme {
-        val navController = rememberNavController()
-        val signal by navigationSignal.collectAsState()
+        AppTooltipProvider {
+            val navController = rememberNavController()
+            val signal by navigationSignal.collectAsState()
 
-        LaunchedEffect(signal) {
-            if (signal == "NAV_NEW_TASK") {
-                navController.navigate(NavNewTask)
-                navigationSignal.value = null
+            LaunchedEffect(signal) {
+                if (signal == "NAV_NEW_TASK") {
+                    navController.navigate(NavNewTask)
+                    navigationSignal.value = null
+                }
             }
-        }
 
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            val transitionDuration = 500
-            NavHost(
-                navController,
-                startDestination = NavLayout,
-                enterTransition = {
-                    slideInHorizontally(
-                        animationSpec = tween(transitionDuration),
-                        initialOffsetX = { fullWidth -> (fullWidth * 0.15f).toInt() }
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = transitionDuration / 2, delayMillis = transitionDuration / 2)
-                    )
-                },
-                exitTransition = {
-                    slideOutHorizontally(
-                        animationSpec = tween(transitionDuration),
-                        targetOffsetX = { fullWidth -> -(fullWidth * 0.15f).toInt() }
-                    ) + fadeOut(
-                        animationSpec = tween(durationMillis = transitionDuration / 2)
-                    )
-                },
-                popEnterTransition = {
-                    slideInHorizontally(
-                        animationSpec = tween(transitionDuration),
-                        initialOffsetX = { fullWidth -> -(fullWidth * 0.15f).toInt() }
-                    ) + fadeIn(
-                        animationSpec = tween(durationMillis = transitionDuration / 2, delayMillis = transitionDuration / 2)
-                    )
-                },
-                popExitTransition = {
-                    slideOutHorizontally(
-                        animationSpec = tween(transitionDuration),
-                        targetOffsetX = { fullWidth -> (fullWidth * 0.15f).toInt() }
-                    ) + fadeOut(
-                        animationSpec = tween(durationMillis = transitionDuration / 2)
-                    )
-                }
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color = MaterialTheme.colorScheme.background
             ) {
-                composable<NavLayout> {
-                    AppLayout(
-                        onNavigate = { route ->
-                            navController.navigate(route)
-                        }
-                    )
-                }
-                composable<NavNewTask> {
-                    NewTaskScreen(
-                        onNavigateBack = { navController.popBackStack() }
-                    )
-                }
+                val transitionDuration = 500
+                NavHost(
+                    navController,
+                    startDestination = NavLayout,
+                    enterTransition = {
+                        slideInHorizontally(
+                            animationSpec = tween(transitionDuration),
+                            initialOffsetX = { fullWidth -> (fullWidth * 0.15f).toInt() }
+                        ) + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = transitionDuration / 2,
+                                delayMillis = transitionDuration / 2
+                            )
+                        )
+                    },
+                    exitTransition = {
+                        slideOutHorizontally(
+                            animationSpec = tween(transitionDuration),
+                            targetOffsetX = { fullWidth -> -(fullWidth * 0.15f).toInt() }
+                        ) + fadeOut(
+                            animationSpec = tween(durationMillis = transitionDuration / 2)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            animationSpec = tween(transitionDuration),
+                            initialOffsetX = { fullWidth -> -(fullWidth * 0.15f).toInt() }
+                        ) + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = transitionDuration / 2,
+                                delayMillis = transitionDuration / 2
+                            )
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutHorizontally(
+                            animationSpec = tween(transitionDuration),
+                            targetOffsetX = { fullWidth -> (fullWidth * 0.15f).toInt() }
+                        ) + fadeOut(
+                            animationSpec = tween(durationMillis = transitionDuration / 2)
+                        )
+                    }
+                ) {
+                    composable<NavLayout> {
+                        AppLayout(
+                            onNavigate = { route ->
+                                navController.navigate(route)
+                            }
+                        )
+                    }
+                    composable<NavNewTask> {
+                        NewTaskScreen(
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
 
-                /*composable<TaskDetails> { backStackEntry ->
-                    val details = backStackEntry.toRoute<TaskDetails>()
-                    ProjectDetailsScreen(id = details.projectId, onBack = { navController.popBackStack() })
-                }*/
+                    /*composable<TaskDetails> { backStackEntry ->
+                        val details = backStackEntry.toRoute<TaskDetails>()
+                        ProjectDetailsScreen(id = details.projectId, onBack = { navController.popBackStack() })
+                    }*/
+                }
             }
         }
     }

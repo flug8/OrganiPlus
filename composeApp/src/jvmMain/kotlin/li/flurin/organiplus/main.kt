@@ -233,7 +233,10 @@ fun main(args: Array<String>) = application {
 
 
 
-
+    val mainWindowState = rememberWindowState(
+        width = 900.dp,
+        height = 675.dp
+    )
 
     DatabaseHolder.init(SqlDriverFactory())
 
@@ -247,6 +250,7 @@ fun main(args: Array<String>) = application {
                 DecoratedWindow(
                     onCloseRequest = { isMainWindowOpen = false },
                     title = "OrganiPlus",
+                    state = mainWindowState,
                     style = if (isDark) DecoratedWindowStyle.dark() else DecoratedWindowStyle.light()
                 ) {
                     val density = LocalDensity.current
