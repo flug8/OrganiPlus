@@ -2,6 +2,8 @@ package li.flurin.organiplus.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,22 +44,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component1
-import androidx.compose.ui.focus.FocusRequester.Companion.FocusRequesterFactory.component2
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -65,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
 import li.flurin.organiplus.Graph
+import li.flurin.organiplus.composable.tooltip
 import li.flurin.organiplus.models.Priority
 import li.flurin.organiplus.viewmodel.NewTaskScreenViewModel
 import li.flurin.organiplus.viewmodel.TaskCreationType
@@ -90,8 +96,38 @@ fun NewTaskScreen(
     val currentDraft by viewModel.draft.collectAsState()
     val showPopup by viewModel.showPopup.collectAsState()
 
+    val mainFocusRequester = remember { FocusRequester() }
+    val firstFocusRequester = remember { FocusRequester() }
+    var isRootFocused by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .focusRequester(mainFocusRequester)
+        .onFocusChanged { isRootFocused = it.isFocused }
+        .focusable()
+        .pointerInput(Unit) {
+            detectTapGestures(onTap = { mainFocusRequester.requestFocus() })
+        }
+        .onPreviewKeyEvent { event ->
+            if (event.type == KeyEventType.KeyDown) {
+                if (event.isCtrlPressed && event.key == Key.S) {
+                    viewModel.saveTask(onComplete = onNavigateBack)
+                    true
+                } else if (event.key == Key.Tab && isRootFocused) {
+                    firstFocusRequester.requestFocus()
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        }
+    ) {
+
+        LaunchedEffect(Unit) {
+            mainFocusRequester.requestFocus()
+        }
 
         Scaffold(
             topBar = {
@@ -101,7 +137,8 @@ fun NewTaskScreen(
                         FilledTonalButton(
                             onClick = {
                                 viewModel.saveTask(onComplete = onNavigateBack)
-                            }
+                            },
+                            modifier = Modifier.tooltip("Save Task", "s", ctrl = true)
                         ) {
                             Text("Save Task")
                         }
@@ -117,6 +154,7 @@ fun NewTaskScreen(
             NewTaskScreenContent(
                 draft = currentDraft,
                 onDraftChange = { viewModel.updateDraft(it) },
+                firstFocusRequester = firstFocusRequester,
                 modifier = Modifier.padding(paddingValues).fillMaxSize()
             )
         }
@@ -156,22 +194,42 @@ fun NewTaskScreen(
 fun NewTaskScreenContent(
     draft: TaskDraft,
     onDraftChange: (TaskDraft) -> Unit,
+    firstFocusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
 
-    val (
-        titleFocus,
-        scheduleFocus,
-    ) = remember { FocusRequester.createRefs() }
+    val scheduleFocus = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        titleFocus.requestFocus()
+        firstFocusRequester.requestFocus()
     }
 
     val isCompact = !currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
 
+
+    val rightContent = @Composable {
+        when (draft.type) {
+            TaskCreationType.TASK -> {
+                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
+                // TODO: Project Module
+                TagsModule(draft, onDraftChange)
+            }
+            TaskCreationType.DROP -> {
+                // TODO: Due Date Module
+                // TODO: Duration Module
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    PriorityModule(draft, onDraftChange, Modifier.weight(1f))
+                    EnergyModule(draft, onDraftChange, Modifier.weight(1f))
+                }
+            }
+            TaskCreationType.HABIT -> {
+                // TODO: Habit Modules
+            }
+        }
+    }
+
+
     if (isCompact) {
-        // MOBILE: Single Column Bento Box
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -180,70 +238,45 @@ fun NewTaskScreenContent(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             TypeSelectorModule(draft, onDraftChange)
-
-            // Only show task content for now as requested
-            if (draft.type == TaskCreationType.TASK) {
-                CreativeCanvasModule(draft, onDraftChange, titleFocus, scheduleFocus)
-                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
-
-                // 2x1 Grid for Priority and Energy
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                    PriorityModule(draft, onDraftChange, Modifier.weight(1f))
-                    EnergyModule(draft, onDraftChange, Modifier.weight(1f))
-                }
-
-                TagsModule(draft, onDraftChange)
-            }
+            CreativeCanvasModule(draft, onDraftChange, firstFocusRequester, scheduleFocus)
+            rightContent()
         }
     } else {
-        // DESKTOP/TABLET: Two-Pane Asymmetrical Dashboard (60/40 Split)
         Row(
             modifier = modifier
                 .fillMaxSize()
                 .padding(24.dp),
             horizontalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Left Pane (60%) - Distraction Free Writing
             Column(
                 modifier = Modifier.weight(0.6f),
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 TypeSelectorModule(draft, onDraftChange)
 
-                if (draft.type == TaskCreationType.TASK) {
-                    CreativeCanvasModule(
-                        draft = draft,
-                        onDraftChange = onDraftChange,
-                        modifier = Modifier.weight(1f),
-                        titleFocus = titleFocus,
-                        nextFocus = scheduleFocus
-                    )
-                }
+                CreativeCanvasModule(
+                    draft = draft,
+                    onDraftChange = onDraftChange,
+                    modifier = Modifier.weight(1f),
+                    titleFocus = firstFocusRequester,
+                    nextFocus = scheduleFocus
+                )
             }
 
-            // Right Pane (40%) - Settings & Metadata
-            if (draft.type == TaskCreationType.TASK) {
-                Column(
-                    modifier = Modifier
-                        .weight(0.4f)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        PriorityModule(draft, onDraftChange, Modifier.weight(1f))
-                        EnergyModule(draft, onDraftChange, Modifier.weight(1f))
-                    }
-
-                    TagsModule(draft, onDraftChange)
-                }
+            Column(
+                modifier = Modifier
+                    .weight(0.4f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                rightContent()
             }
         }
     }
 }
 
-// --- Base Wrapper for Expressive M3 Style ---
+
 
 @Composable
 fun ExpressiveModule(
