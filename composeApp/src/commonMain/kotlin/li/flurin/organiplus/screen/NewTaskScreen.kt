@@ -30,6 +30,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +58,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
@@ -84,6 +86,7 @@ import organiplus.composeapp.generated.resources.date_range_24px
 import organiplus.composeapp.generated.resources.flag_24px
 import organiplus.composeapp.generated.resources.home_filled_24px
 import organiplus.composeapp.generated.resources.notifications_active_24px
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,6 +119,16 @@ fun NewTaskScreen(
                 } else if (event.key == Key.Tab && isRootFocused) {
                     firstFocusRequester.requestFocus()
                     true
+                } else if (event.isAltPressed) {
+                    when (event.key) {
+                        Key.One -> TaskCreationType.TASK
+                        Key.Two -> TaskCreationType.DROP
+                        Key.Three -> TaskCreationType.HABIT
+                        else -> null
+                    }?.let { type ->
+                        viewModel.updateDraft(currentDraft.copy(type = type))
+                        true
+                    } ?: false
                 } else {
                     false
                 }
@@ -138,13 +151,22 @@ fun NewTaskScreen(
                             onClick = {
                                 viewModel.saveTask(onComplete = onNavigateBack)
                             },
-                            modifier = Modifier.tooltip("Save Task", "s", ctrl = true)
+                            modifier = Modifier
+                                .padding(end=12.dp)
+                                .tooltip("Save Task", "s", ctrl = true)
                         ) {
                             Text("Save Task")
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = onNavigateBack) {
+                        IconButton(
+                            onClick = onNavigateBack,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
+                            modifier = Modifier.padding(horizontal = 8.dp)
+                        ) {
                             Icon(painterResource(Res.drawable.arrow_back_24px), contentDescription = "Back")
                         }
                     }
@@ -245,12 +267,12 @@ fun NewTaskScreenContent(
         Row(
             modifier = modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(
                 modifier = Modifier.weight(0.6f),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 TypeSelectorModule(draft, onDraftChange)
 
@@ -282,7 +304,7 @@ fun NewTaskScreenContent(
 fun ExpressiveModule(
     modifier: Modifier = Modifier,
     containerColor: Color = MaterialTheme.colorScheme.surfaceContainerLow,
-    contentPadding: PaddingValues = PaddingValues(20.dp),
+    contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
     Surface(
@@ -302,7 +324,6 @@ fun ExpressiveModule(
 
 @Composable
 fun TypeSelectorModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit) {
-    // Minimalist pill-shaped selector
     Surface(
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -312,17 +333,21 @@ fun TypeSelectorModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit) {
             modifier = Modifier.padding(8.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            val types = listOf(TaskCreationType.TASK, TaskCreationType.DROP, TaskCreationType.HABIT)
-            types.forEach { type ->
-                val isSelected = draft.type == type
-                val label = type.name.lowercase().replaceFirstChar { it.uppercase() }
+            val types = listOf(
+                TaskCreationType.TASK to "Manually Scheduled",
+                TaskCreationType.DROP to "Automatically Scheduled",
+                TaskCreationType.HABIT to "Repeating regularly")
+            types.forEachIndexed { i, type ->
+                val isSelected = draft.type == type.first
+                val label = type.first.name.lowercase().replaceFirstChar { it.uppercase() }
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(CircleShape)
                         .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                        .clickable { onDraftChange(draft.copy(type = type)) }
+                        .tooltip(type.second, (i + 1).toString(), alt = true)
+                        .clickable { onDraftChange(draft.copy(type = type.first)) }
                         .padding(vertical = 12.dp),
                     contentAlignment = Alignment.Center
                 ) {
