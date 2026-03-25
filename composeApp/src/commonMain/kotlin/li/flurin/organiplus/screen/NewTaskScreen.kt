@@ -24,23 +24,30 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AssistChip
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.InputChip
-import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TimeInput
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.TimePickerDialog
+import androidx.compose.material3.TimePickerLayoutType
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,8 +73,14 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.window.core.layout.WindowSizeClass
@@ -84,8 +97,14 @@ import organiplus.composeapp.generated.resources.arrow_back_24px
 import organiplus.composeapp.generated.resources.bolt_24px
 import organiplus.composeapp.generated.resources.date_range_24px
 import organiplus.composeapp.generated.resources.flag_24px
-import organiplus.composeapp.generated.resources.home_filled_24px
-import organiplus.composeapp.generated.resources.notifications_active_24px
+import organiplus.composeapp.generated.resources.keyboard_24px
+import organiplus.composeapp.generated.resources.schedule_24px
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -232,7 +251,7 @@ fun NewTaskScreenContent(
     val rightContent = @Composable {
         when (draft.type) {
             TaskCreationType.TASK -> {
-                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus)
+                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus, isCompact)
                 // TODO: Project Module
                 TagsModule(draft, onDraftChange)
             }
@@ -429,88 +448,266 @@ fun CreativeCanvasModule(
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScheduleAndRemindersModule(draft: TaskDraft, onDraftChange: (TaskDraft) -> Unit, scheduleFocus: FocusRequester) {
+fun ScheduleAndRemindersModule(
+    draft: TaskDraft,
+    onDraftChange: (TaskDraft) -> Unit,
+    scheduleFocus: FocusRequester,
+    isCompact: Boolean = false
+) {
+    var dateText by remember(draft.date) {
+        mutableStateOf(draft.date?.format(DateTimeFormatter.ofPattern("ddMMyyyy")) ?: "")
+    }
+    var timeText by remember(draft.time) {
+        mutableStateOf(draft.time?.format(DateTimeFormatter.ofPattern("HHmm")) ?: "")
+    }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
+    var showTimeDial by remember { mutableStateOf(true) }
+
     ExpressiveModule {
-        // --- Schedule Section ---
+        Text(
+            "Schedule",
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(scheduleFocus)
-                    .clickable { /* TODO: Open Date Picker */ }) {
-                Text(
-                    "Schedule",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = dateText,
+                    onValueChange = { newValue ->
+                        val digits = newValue.filter { it.isDigit() }.take(8)
+                        var isValid = true
+
+                        if (digits.isNotEmpty() && digits[0] !in '0'..'3') isValid = false
+                        if (digits.length >= 2 && (digits.take(2).toIntOrNull() ?: 0) !in 1..31) isValid = false
+                        if (digits.length >= 3 && digits[2] !in '0'..'1') isValid = false
+                        if (digits.length >= 4 && (digits.substring(2, 4).toIntOrNull() ?: 0) !in 1..12) isValid = false
+
+                        if (isValid) {
+                            dateText = digits
+                            if (digits.length == 8) {
+                                try {
+                                    val parsedDate = LocalDate.parse(digits, DateTimeFormatter.ofPattern("ddMMyyyy"))
+                                    onDraftChange(draft.copy(date = parsedDate))
+                                } catch (e: DateTimeParseException) { }
+                            }
+                        }
+                    },
+                    label = { Text("Date") },
+                    placeholder = { Text("DD.MM.YYYY", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    visualTransformation = DateVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    readOnly = isCompact,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(scheduleFocus),
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(painterResource(Res.drawable.date_range_24px), contentDescription = "Pick Date")
+                        }
+                    }
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = draft.date?.toString()
-                        ?: "Today", // TODO: Format nicely (e.g. "Tomorrow, Oct 24")
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
-                )
+
+                if (isCompact) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = null,
+                                indication = null
+                            ) { showDatePicker = true }
+                    )
+                }
             }
 
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                onClick = { /* TODO: Open Time Picker */ }
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Icon(painterResource(Res.drawable.date_range_24px), contentDescription = null, modifier = Modifier.size(20.dp))
-                    Text(
-                        text = draft.time?.toString() ?: "Add Time",
-                        style = MaterialTheme.typography.titleMedium
+            Box(modifier = Modifier.weight(1f)) {
+                OutlinedTextField(
+                    value = timeText,
+                    onValueChange = { newValue ->
+                        val digits = newValue.filter { it.isDigit() }.take(4)
+                        var isValid = true
+
+                        if (digits.isNotEmpty() && digits[0] !in '0'..'2') isValid = false
+                        if (digits.length >= 2 && (digits.take(2).toIntOrNull() ?: 0) !in 0..23) isValid = false
+                        if (digits.length >= 3 && digits[2] !in '0'..'5') isValid = false
+
+                        if (isValid) {
+                            timeText = digits
+                            if (digits.length == 4) {
+                                try {
+                                    val parsedTime = LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"))
+                                    onDraftChange(draft.copy(time = parsedTime))
+                                } catch (e: DateTimeParseException) { }
+                            }
+                        }
+                    },
+                    label = { Text("Time") },
+                    placeholder = { Text("HH:MM", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    visualTransformation = TimeVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    readOnly = isCompact,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    trailingIcon = {
+                        IconButton(onClick = { showTimePicker = true }) {
+                            Icon(painterResource(Res.drawable.schedule_24px), contentDescription = "Pick Time")
+                        }
+                    }
+                )
+
+                if (isCompact) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = null,
+                                indication = null
+                            ) { showTimePicker = true }
                     )
                 }
             }
         }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        // TODO: ADD BACK REMINDER SECTION
+    }
 
-        // --- Reminders Section ---
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(Res.drawable.notifications_active_24px), contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
-            Text("Reminders", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = draft.date
+                ?.atStartOfDay(ZoneId.systemDefault())
+                ?.toInstant()
+                ?.toEpochMilli()
+        )
 
-        // TODO: Replace with actual draft.reminders list
-        val fakeReminders = listOf("15m before • Gentle", "08:00 on day • Aggressive")
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { millis ->
+                        val selectedDate = Instant.ofEpochMilli(millis)
+                            .atZone(ZoneId.of("UTC"))
+                            .toLocalDate()
 
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            fakeReminders.forEach { reminderText ->
-                InputChip(
-                    selected = false,
-                    onClick = { /* TODO: Edit Reminder */ },
-                    label = { Text(reminderText) },
-                    trailingIcon = { Icon(painterResource(Res.drawable.home_filled_24px), "Remove", modifier = Modifier.size(16.dp)) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = InputChipDefaults.inputChipColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)
-                )
+                        onDraftChange(draft.copy(date = selectedDate))
+                        dateText = selectedDate.format(DateTimeFormatter.ofPattern("ddMMyyyy"))
+                    }
+                    showDatePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
             }
-
-            AssistChip(
-                onClick = { /* TODO: Open Add Reminder Flow */ },
-                label = { Text("Add") },
-                leadingIcon = { Icon(painterResource(Res.drawable.add_24px), "Add", modifier = Modifier.size(16.dp)) },
-                shape = RoundedCornerShape(12.dp)
-            )
+        ) {
+            DatePicker(state = datePickerState)
         }
+    }
+
+    if (showTimePicker) {
+        val timePickerState = rememberTimePickerState(
+            initialHour = draft.time?.hour ?: 12,
+            initialMinute = draft.time?.minute ?: 0,
+            is24Hour = true
+        )
+
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = { Text(if (showTimeDial) "Select time" else "Enter time") },
+            modeToggleButton = {
+                IconButton(onClick = { showTimeDial = !showTimeDial }) {
+                    val iconRes = if (showTimeDial) Res.drawable.keyboard_24px else Res.drawable.schedule_24px
+                    val description = if (showTimeDial) "Switch to text input" else "Switch to clock dial"
+                    Icon(painterResource(iconRes), contentDescription = description)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val selectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                    onDraftChange(draft.copy(time = selectedTime))
+                    timeText = selectedTime.format(DateTimeFormatter.ofPattern("HHmm"))
+                    showTimePicker = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            if (showTimeDial) {
+                TimePicker(
+                    state = timePickerState,
+                    layoutType = TimePickerLayoutType.Vertical
+                )
+            } else {
+                TimeInput(state = timePickerState)
+            }
+        }
+    }
+}
+
+class DateVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = text.text.take(8)
+        var out = ""
+        for (i in trimmed.indices) {
+            out += trimmed[i]
+            if (i == 1 || i == 3) out += "."
+        }
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 1) return offset
+                if (offset <= 3) return offset + 1
+                if (offset <= 8) return offset + 2
+                return 10
+            }
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 5) return offset - 1
+                if (offset <= 10) return offset - 2
+                return 8
+            }
+        }
+        return TransformedText(AnnotatedString(out), offsetMapping)
+    }
+}
+
+class TimeVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val trimmed = text.text.take(4)
+        var out = ""
+        for (i in trimmed.indices) {
+            out += trimmed[i]
+            if (i == 1) out += ":"
+        }
+        val offsetMapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int {
+                if (offset <= 1) return offset
+                if (offset <= 4) return offset + 1
+                return 5
+            }
+            override fun transformedToOriginal(offset: Int): Int {
+                if (offset <= 2) return offset
+                if (offset <= 5) return offset - 1
+                return 4
+            }
+        }
+        return TransformedText(AnnotatedString(out), offsetMapping)
     }
 }
 
