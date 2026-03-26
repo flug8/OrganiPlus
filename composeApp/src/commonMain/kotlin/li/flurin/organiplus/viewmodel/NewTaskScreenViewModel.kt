@@ -1,5 +1,8 @@
 package li.flurin.organiplus.viewmodel
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +34,12 @@ class NewTaskScreenViewModel(repository: TaskDraftRepository) : ViewModel() {
         repository.pendingDraft == null && getPlatform().isMobile
     )
     val showPopup = _showPopup.asStateFlow()
+
+    var hasAttemptedSave: Boolean by mutableStateOf(false)
+        private set
+    fun onSaveAttempted() {
+        hasAttemptedSave = true
+    }
 
     fun updateDraft(newDraft: TaskDraft) {
         _draft.value = newDraft

@@ -60,6 +60,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -133,7 +134,10 @@ fun NewTaskScreen(
         .onPreviewKeyEvent { event ->
             if (event.type == KeyEventType.KeyDown) {
                 if (event.isCtrlPressed && event.key == Key.S) {
-                    viewModel.saveTask(onComplete = onNavigateBack)
+                    viewModel.onSaveAttempted()
+                    if (false /*TODO: set conditions*/) {
+                        viewModel.saveTask(onComplete = onNavigateBack)
+                    }
                     true
                 } else if (event.key == Key.Tab && isRootFocused) {
                     firstFocusRequester.requestFocus()
@@ -168,7 +172,10 @@ fun NewTaskScreen(
                     actions = {
                         FilledTonalButton(
                             onClick = {
-                                viewModel.saveTask(onComplete = onNavigateBack)
+                                viewModel.onSaveAttempted()
+                                if (false /*TODO: set conditions*/) {
+                                    viewModel.saveTask(onComplete = onNavigateBack)
+                                }
                             },
                             modifier = Modifier
                                 .padding(end=12.dp)
@@ -193,6 +200,7 @@ fun NewTaskScreen(
             }
         ) { paddingValues ->
             NewTaskScreenContent(
+                viewModel = viewModel,
                 draft = currentDraft,
                 onDraftChange = { viewModel.updateDraft(it) },
                 firstFocusRequester = firstFocusRequester,
@@ -233,6 +241,7 @@ fun NewTaskScreen(
 
 @Composable
 fun NewTaskScreenContent(
+    viewModel: NewTaskScreenViewModel,
     draft: TaskDraft,
     onDraftChange: (TaskDraft) -> Unit,
     firstFocusRequester: FocusRequester,
@@ -251,7 +260,7 @@ fun NewTaskScreenContent(
     val rightContent = @Composable {
         when (draft.type) {
             TaskCreationType.TASK -> {
-                ScheduleAndRemindersModule(draft, onDraftChange, scheduleFocus, isCompact)
+                ScheduleAndRemindersModule(viewModel, draft, onDraftChange, scheduleFocus, isCompact)
                 // TODO: Project Module
                 TagsModule(draft, onDraftChange)
             }
@@ -452,6 +461,7 @@ fun CreativeCanvasModule(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScheduleAndRemindersModule(
+    viewModel: NewTaskScreenViewModel,
     draft: TaskDraft,
     onDraftChange: (TaskDraft) -> Unit,
     scheduleFocus: FocusRequester,
@@ -481,7 +491,13 @@ fun ScheduleAndRemindersModule(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val timeFocusRequester = remember { FocusRequester() }
             Box(modifier = Modifier.weight(1f)) {
+                var isTouched by remember { mutableStateOf(false) }
+                var wasFocused by remember { mutableStateOf(false) }
+                val isInvalid = dateText.isEmpty() || (dateText.isNotEmpty() && dateText.length < 8) ||
+                        (draft.date != null && draft.date.year < 2000)
+                val shouldShowError = (isTouched || viewModel.hasAttemptedSave) && isInvalid
                 OutlinedTextField(
                     value = dateText,
                     onValueChange = { newValue ->
@@ -512,10 +528,30 @@ fun ScheduleAndRemindersModule(
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .focusRequester(scheduleFocus),
+                        .focusRequester(scheduleFocus)
+                        .focusProperties{
+                            next = timeFocusRequester
+                        }
+                        .onFocusChanged { focusState ->
+                            if (focusState.isFocused) {
+                                wasFocused = true
+                            } else if (wasFocused) {
+                                isTouched = true
+                            }
+                        },
                     trailingIcon = {
                         IconButton(onClick = { showDatePicker = true }) {
                             Icon(painterResource(Res.drawable.date_range_24px), contentDescription = "Pick Date")
+                        }
+                    },
+                    isError = shouldShowError,
+                    supportingText = {
+                        if (shouldShowError) {
+                            if (draft.date != null && draft.date.year < 2000) {
+                                Text("Year ${draft.date.year}, Really?")
+                            } else {
+                                Text("Date invalid")
+                            }
                         }
                     }
                 )
@@ -533,6 +569,10 @@ fun ScheduleAndRemindersModule(
             }
 
             Box(modifier = Modifier.weight(1f)) {
+                var isTouched by remember { mutableStateOf(false) }
+                var wasFocused by remember { mutableStateOf(false) }
+                val isInvalid = timeText.isEmpty() || (timeText.isNotEmpty() && timeText.length < 4)
+                val shouldShowError = (isTouched || viewModel.hasAttemptedSave) && isInvalid
                 OutlinedTextField(
                     value = timeText,
                     onValueChange = { newValue ->
@@ -560,10 +600,25 @@ fun ScheduleAndRemindersModule(
                     singleLine = true,
                     readOnly = isCompact,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(timeFocusRequester)
+                        .onFocusChanged { focusState ->
+                            if (focusState.isFocused) {
+                                wasFocused = true
+                            } else if (wasFocused) {
+                                isTouched = true
+                            }
+                        },
                     trailingIcon = {
                         IconButton(onClick = { showTimePicker = true }) {
                             Icon(painterResource(Res.drawable.schedule_24px), contentDescription = "Pick Time")
+                        }
+                    },
+                    isError = shouldShowError,
+                    supportingText = {
+                        if (shouldShowError) {
+                            Text("Time invalid")
                         }
                     }
                 )
